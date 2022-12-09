@@ -4,7 +4,7 @@ Repository for the project of tetrahedral meshes generation from biological 3D i
 ## Subject 
 The aim of this project is to provide a system for intuitively generating surface meshes representing the interfaces between cells in order to allow interactive exploration of this data by biologists.
 
-One approach would be to generate tetrahedral meshes at different resolutions \[[Faraj 2016]\](https://www.sciencedirect.com/science/article/abs/pii/S0097849316300620) and extract the interfaces.
+One approach would be to generate tetrahedral meshes at different resolutions [[Faraj 2016](https://www.sciencedirect.com/science/article/abs/pii/S0097849316300620)] and extract the interfaces.
 
 This project is based on a previous TER : [github link](https://github.com/Isnao/TER_GenMaillage) 
 
