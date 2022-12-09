@@ -10,6 +10,7 @@ This project is based on a previous TER : [github link](https://github.com/Isnao
 
 ## Supervisors
 - [Noura Faraj](https://www.lirmm.fr/~nfaraj/)
+- [Emmanuel Faure](https://www.lirmm.fr/~efaure/)
 
 ## Contributors
 - Ange Clément (ange.clement@etu.umontpellier.fr)
