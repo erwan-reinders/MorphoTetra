@@ -25,7 +25,7 @@
 #ifndef MESH_VIEWER_H
 #define MESH_VIEWER_H
 
-#include "cgal_headers.h"
+#include "CGAL/cgal_headers.h"
 #include <QGLViewer/qglviewer.h>
 #include <QString>
 #include <set>
@@ -69,7 +69,10 @@ protected:
     qglviewer::Vec m_center;
 
     bool E, V, F, P, SD, SDP;
+    bool cutPlane;
     int indexP, indexSP, indexSD, indexSDP;
+    K::Vector_3 planeCenter;
+    K::Vector_3 planeNormal;
 
 public slots:
     void onlyEdges();

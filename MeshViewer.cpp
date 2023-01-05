@@ -312,6 +312,10 @@ void printPolyligne(std::vector<C3t3::Edge> &polyLine)
     }
 }
 
+bool pointInGoodSideOfPlane(const K::Vector_3 & p, const K::Vector_3 & planeCenter, const K::Vector_3 planeNormal) {
+    return CGAL::scalar_product(planeCenter - p, planeNormal) > 0;
+}
+
 void Viewer::glFacet( const Facet & facet ){
     const Point_3 & pa = facet.first->vertex(m_indices[facet.second][0])->point();
     const Point_3 & pb = facet.first->vertex(m_indices[facet.second][1])->point();
@@ -319,8 +323,19 @@ void Viewer::glFacet( const Facet & facet ){
     K::Vector_3 pac (pc.x() - pa.x(), pc.y() - pa.y(), pc.z() - pa.z());
     K::Vector_3 pab (pb.x() - pa.x(), pb.y() - pa.y(), pb.z() - pa.z());
 
+    bool sholdDrawFacet = true;
+    if (cutPlane) {
+        sholdDrawFacet = pointInGoodSideOfPlane(K::Vector_3(pa.x(), pa.y(), pa.z()), planeCenter, planeNormal)
+                || pointInGoodSideOfPlane(K::Vector_3(pb.x(), pb.y(), pb.z()), planeCenter, planeNormal)
+                || pointInGoodSideOfPlane(K::Vector_3(pc.x(), pc.y(), pc.z()), planeCenter, planeNormal);
+    }
+
+    if (!sholdDrawFacet) {
+        return;
+    }
+
     K::Vector_3 n = CGAL::cross_product( pac, pab );
-    n = n / CGAL::sqrt(n*n);
+    n = n / CGAL::sqrt(n.squared_length());
 
     glNormal3d(n.x(),n.y(),n.z());
 
@@ -424,6 +439,7 @@ void Viewer::drawEdges(){
 
     glColor4f( 1.,0.8,0., 1.);
 
+    //TODO cylindres, ...
     glBegin(GL_LINES);
 
     for (C3t3::Edges_in_complex_iterator eit = m_c3t3.edges_in_complex_begin () ; eit != m_c3t3.edges_in_complex_end (); ++eit ) {
@@ -550,7 +566,7 @@ void Viewer::draw() {
     //    std::cout << "SDP : " << SDP << std::endl;
     //}
 
-
+    // TODO regarder ces méthodes (extraire les données avant le dessin)
     if (V)
         drawVertices();
     if (E)
@@ -597,10 +613,13 @@ void Viewer::init() {
     P = false;
     SD = false;
     SDP= false;
+    cutPlane = true; // TODO false
     indexP = 0;
     indexSP = 0;
     indexSD = 0;
     indexSDP = 0;
+    planeCenter = K::Vector_3(0, 0, 0);
+    planeNormal = K::Vector_3(0, 1, 0);
 
     m_indices[0][0] = 3; m_indices[0][2] = 1; m_indices[0][1] = 2;
     m_indices[1][0] = 3; m_indices[1][2] = 2; m_indices[1][1] = 0;
@@ -620,6 +639,16 @@ void Viewer::init() {
     std::ifstream c3t3_load("data/out.mesh");    
     if(DEBUG) std::cout << "VIEWER : DATA LOADED" << std::endl;
     c3t3_load >> m_c3t3;
+
+    int nbV = 0;
+    for( Tr::Finite_vertices_iterator vit = m_c3t3.triangulation().finite_vertices_begin(); vit != m_c3t3.triangulation().finite_vertices_end() ; ++vit  ){
+        if(m_c3t3.in_dimension(vit) < 3){
+            Point_3 position = vit->point();
+            planeCenter += K::Vector_3(position.x(), position.y(), position.z());
+            nbV++;
+        }
+    }
+    planeCenter /= nbV;
 
     if(DEBUG) std::cout << "VIEWER : remplissage des dimensions c3t3 + remplissages des egdes caracteristiques" << std::endl;
       std::vector<C3t3::Edge> CaracEdge;
@@ -734,6 +763,7 @@ void Viewer::init() {
     CGAL::Bbox_3 bbox = m_c3t3.bbox();
 
     m_center = qglviewer::Vec ((bbox.xmax() - bbox.xmin())/2., (bbox.ymax() - bbox.ymin())/2., (bbox.zmax() - bbox.zmin())/2.);
+
     camera()->setSceneCenter(qglviewer::Vec((bbox.xmax() - bbox.xmin())/2., (bbox.ymax() - bbox.ymin())/2., (bbox.zmax() - bbox.zmin())/2.));
     camera()->setSceneRadius(std::max(std::max(bbox.xmax() - bbox.xmin(), bbox.ymax() - bbox.ymin()), bbox.zmax() - bbox.zmin())*2.);
 
