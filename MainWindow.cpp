@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include "MultiMeshViewer.h"
 
 MainWindow::MainWindow(){
     if (this->objectName().isEmpty())

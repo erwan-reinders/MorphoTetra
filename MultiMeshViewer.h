@@ -1,6 +1,7 @@
 #ifndef MULTIMESHVIEWER_H
 #define MULTIMESHVIEWER_H
 
+#pragma once
 #include "QGLViewer/qglviewer.h"
 #include <vector>
 #include "MeshModel.h"

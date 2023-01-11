@@ -23,7 +23,6 @@ SOURCES += Main.cpp \
     MeshModel.cpp \
     MorphoTetraDocWidget.cpp \
     MultiMeshViewer.cpp \
-    GLSL/GLUtilityMethods.cpp \
 
     #Window.cpp \
     #MeshViewer.cpp \
@@ -41,7 +40,6 @@ HEADERS += CGAL/cgal_basicfunctions.h \
     CGAL/cgal_headers.h \
     CGAL/Tetrahedron.h \
     CGAL/Triangle.h \
-    GLSL/GLUtilityMethods.h \
 
 
 

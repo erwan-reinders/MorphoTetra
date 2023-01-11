@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "MultiMeshViewer.h"
 #include "MorphoTetraDocWidget.h"
 #include <QGroupBox>
 #include <QGridLayout>

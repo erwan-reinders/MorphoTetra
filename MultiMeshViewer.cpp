@@ -49,22 +49,15 @@ void MultiMeshViewer::setVisibility(unsigned int i, bool visibility){
 }
 
 void MultiMeshViewer::init(){
-
     restoreStateFromFile();
     setManipulatedFrame(new qglviewer::ManipulatedFrame());
     MeshModel::computeShaderPrograms();
     initAllMesh();
 
-    //glDisable(GL_LIGHTING);
-
-
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-    //initLigthAndMaterial();
-
+    initLigthAndMaterial();
     initCurrentDisplayedMesh();
 
-    //glDisable( GL_DEBUG_OUTPUT );
+    glDisable( GL_DEBUG_OUTPUT );
 
     emit setMeshSubdomains();
 }
@@ -80,16 +73,12 @@ void MultiMeshViewer::draw(){
     //std::cout << "DRAW ! " << std::endl;
 
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_DEPTH);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 
-    //std::cout << camera() << std::endl;
-
-    //glDisable(GL_LIGHTING);
     m_meshes[m_curModel].draw(camera(),m_displayMap,m_colorMap);
-    //std::cout << camera() << std::endl;
 }
 
 void MultiMeshViewer::clear(){
@@ -97,20 +86,6 @@ void MultiMeshViewer::clear(){
 }
 
 void MultiMeshViewer::initLigthAndMaterial(){
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
-    //glDisable(GL_LIGHTING);
-    //glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_COLOR_MATERIAL);
-
-    //GLTools::initLights();
-    ////GLTools::setDefaultMaterial();
-    //GLTools::setSunriseLight();
-    //GLTools::setDefaultMaterial();
-    //glDisable(GL_CULL_FACE);
-    //float lmodel_twoside[] =
-    //{GL_TRUE};
-    //glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
 
 }
 

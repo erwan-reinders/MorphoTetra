@@ -3,6 +3,7 @@
 
 #include "CGAL/cgal_headers.h"
 #include "GLSL/glsl_basicfunctions.h"
+#include "GLSL/GLUtilityMethods.h"
 #include "CGAL/Tetrahedron.h"
 #include "CGAL/Triangle.h"
 
