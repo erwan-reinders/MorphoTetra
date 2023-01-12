@@ -24,6 +24,8 @@ public:
     void selectAll();
     void discardAll();
     void setVisibility(unsigned int i, bool visibility);
+    void setDrawMesh(int state);
+    void setDrawVertices(int state);
 
     std::map<Subdomain_index, QColor> getColorMap(){return m_colorMap;}
     const std::map<Subdomain_index, QColor> getColorMap()const {return m_colorMap;}

@@ -37,12 +37,22 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     QPushButton *discardIPushButton = new QPushButton("Discard All", m_displaySubdomainsBox);
     segIGridKayout->addWidget(discardIPushButton, 0, 1, 1, 1);
 
+    QCheckBox * setDrawMeshBox = new QCheckBox("Draw Mesh", m_displaySubdomainsBox);
+    setDrawMeshBox->setChecked(true);
+    segIGridKayout->addWidget(setDrawMeshBox, 1, 0, 1, 2);
+
+    QCheckBox * setDrawVerticesBox = new QCheckBox("Draw Vertices", m_displaySubdomainsBox);
+    setDrawVerticesBox->setChecked(false);
+    segIGridKayout->addWidget(setDrawVerticesBox, 2, 0, 1, 2);
+
     segIVLayout->addLayout(segIGridKayout);
 
     segIVLayout->addStretch(0);
 
     connect(discardIPushButton, SIGNAL(clicked()), this, SLOT(discardAll()));
     connect(selectIPushButton, SIGNAL(clicked()), this, SLOT(selectAll()));
+    connect(setDrawMeshBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawMesh(int)));
+    connect(setDrawVerticesBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawVertices(int)));
 
     connect(m_viewer, SIGNAL(setMeshSubdomains()), this, SLOT(setMeshSubDomains()));
     contentLayout->addWidget(m_displaySubdomainsBox);
@@ -125,4 +135,12 @@ void MorphoTetraDocWidget::discardAll(){
         }
     }
     m_viewer->discardAll();
+}
+
+void MorphoTetraDocWidget::setDrawMesh(int state) {
+    m_viewer->setDrawMesh(state);
+}
+
+void MorphoTetraDocWidget::setDrawVertices(int state) {
+    m_viewer->setDrawVertices(state);
 }

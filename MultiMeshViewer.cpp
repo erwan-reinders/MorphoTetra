@@ -48,6 +48,20 @@ void MultiMeshViewer::setVisibility(unsigned int i, bool visibility){
     update();
 }
 
+void MultiMeshViewer::setDrawMesh(int state) {
+    for (int i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i].m_drawMesh = state;
+    }
+    update();
+}
+
+void MultiMeshViewer::setDrawVertices(int state) {
+    for (int i = 0; i < m_meshes.size(); i++) {
+        m_meshes[i].m_drawPoints = state;
+    }
+    update();
+}
+
 void MultiMeshViewer::init(){
     restoreStateFromFile();
     setManipulatedFrame(new qglviewer::ManipulatedFrame());

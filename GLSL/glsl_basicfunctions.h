@@ -44,10 +44,10 @@ inline namespace GLTools{
     };
 
     inline qglviewer::Vec pointLightColors[] = {
-        qglviewer::Vec(1.0f, 0.6f, 0.0f),
-        qglviewer::Vec(1.0f, 0.0f, 0.0f),
-        qglviewer::Vec(1.0f, 1.0, 0.0),
-        qglviewer::Vec(0.2f, 0.2f, 1.0f),
+        qglviewer::Vec(0.8f, 0.8f, 0.8f),
+        qglviewer::Vec(0.8f, 0.8f, 0.8f),
+        qglviewer::Vec(0.8f, 0.8f, 0.8f),
+        qglviewer::Vec(0.8f, 0.8f, 0.8f),
 
         qglviewer::Vec(1.0f,0.0f, 0.0f),
         qglviewer::Vec(0.0f, 1.0f, 0.0f),
@@ -58,10 +58,11 @@ inline namespace GLTools{
     };
 
     inline qglviewer::Vec pointLightPositions[] = {
-        qglviewer::Vec(10.0f, 10.0f, .5f),
-        qglviewer::Vec(251.057f,269.073f,218.577f),
-        qglviewer::Vec(1.0f, 1.0f, .5f),
-        qglviewer::Vec(1.0f, 0.0f, .5f),
+        //Todo changer en coord normalisé
+        qglviewer::Vec(1500.0f, 0.0f, 0.0f),
+        qglviewer::Vec(0.0f, 1500.0f, 0.0f),
+        qglviewer::Vec(0.0f, 0.0f, 1500.0f),
+        qglviewer::Vec(1500.0f, 1500.0f, 1500.0f),
 
         qglviewer::Vec(0.0f, 0.0f, 10.0f),
         qglviewer::Vec(52.0f, 16.0f, 50.0f),
@@ -138,10 +139,10 @@ inline namespace GLTools{
     }
 
     inline void initLightsDefault(GLuint program, QOpenGLExtraFunctions*  cur_glFunctions) {
-        setPointLight(program, cur_glFunctions,0,pointLightPositions[0],1.0,0.09,0.032,0.1*pointLightColors[0],pointLightColors[0],pointLightColors[0]);
-        setPointLight(program, cur_glFunctions,1,pointLightPositions[1],1.0,0.09,0.032,0.1*pointLightColors[1],pointLightColors[1],pointLightColors[1]);
-        setPointLight(program, cur_glFunctions,2,pointLightPositions[2],1.0,0.09,0.032,0.1*pointLightColors[2],pointLightColors[2],pointLightColors[2]);
-        setPointLight(program, cur_glFunctions,3,pointLightPositions[3],1.0,0.09,0.032,0.1*pointLightColors[3],pointLightColors[3],pointLightColors[3]);
+        setPointLight(program, cur_glFunctions,0,pointLightPositions[0],1.0,0.09,0.032,pointLightColors[0],pointLightColors[0],pointLightColors[0]);
+        setPointLight(program, cur_glFunctions,1,pointLightPositions[1],1.0,0.09,0.032,pointLightColors[1],pointLightColors[1],pointLightColors[1]);
+        setPointLight(program, cur_glFunctions,2,pointLightPositions[2],1.0,0.09,0.032,pointLightColors[2],pointLightColors[2],pointLightColors[2]);
+        setPointLight(program, cur_glFunctions,3,pointLightPositions[3],1.0,0.09,0.032,pointLightColors[3],pointLightColors[3],pointLightColors[3]);
 
         cur_glFunctions->glUniform1i(cur_glFunctions->glGetUniformLocation(program,SHADERS_name_nbpL),4);
     }
@@ -151,8 +152,10 @@ inline namespace GLTools{
         switch( typ ) {
             // My special materials
         case MY_MATERIAL_01:
-            setAmbient  (program,cur_glFunctions, 0.0f,			0.058823530f,	0.32549021f );
-            setDiffuse  (program,cur_glFunctions, 0.54509807f,	0.76078433f,	0.81960785f );
+            //setAmbient  (program,cur_glFunctions, 0.0f,			0.058823530f,	0.32549021f );
+            setAmbient  (program,cur_glFunctions, .3f, .3f, .3f );
+            setDiffuse  (program,cur_glFunctions, .7f, .7f, .7f );
+            //setDiffuse  (program,cur_glFunctions, 0.54509807f,	0.76078433f,	0.81960785f );
             setSpecular (program,cur_glFunctions, 1.f,			1.f,			1.f );
             setShininess(program,cur_glFunctions, 1.f );
             break;
