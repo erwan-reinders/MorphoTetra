@@ -46,9 +46,25 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     setDrawVerticesBox->setChecked(false);
     segIGridKayout->addWidget(setDrawVerticesBox, 2, 0, 1, 2);
 
-    QCheckBox * setDrawPolylinesBox = new QCheckBox("Draw polylines", m_displaySubdomainsBox);
-    setDrawPolylinesBox->setChecked(false);
-    segIGridKayout->addWidget(setDrawPolylinesBox, 3, 0, 1, 2);
+
+
+    //QCheckBox * setDrawPolylinesBox = new QCheckBox("Draw polylines", m_displaySubdomainsBox);
+    //setDrawPolylinesBox->setChecked(false);
+    //segIGridKayout->addWidget(setDrawPolylinesBox, 3, 0, 1, 2);
+
+    QGroupBox * polylineDrawModeGroup = new QGroupBox("Draw polylines", m_displaySubdomainsBox);
+    polylineDrawModeGroup->setCheckable(true);
+    polylineDrawModeGroup->setChecked(false);
+    segIGridKayout->addWidget(polylineDrawModeGroup, 4, 0, 2, 2);
+
+    QVBoxLayout * polylineDrawModeGroupLayout = new QVBoxLayout(polylineDrawModeGroup);
+    QRadioButton * linearModeRadio = new QRadioButton("Linear");
+    QRadioButton * CRModeRadio = new QRadioButton("Cattmull-Rom");
+    linearModeRadio->setChecked(true);
+    polylineDrawModeGroupLayout->addWidget(linearModeRadio);
+    polylineDrawModeGroupLayout->addWidget(CRModeRadio);
+
+
 
     segIVLayout->addLayout(segIGridKayout);
 
@@ -58,7 +74,9 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     connect(selectIPushButton, SIGNAL(clicked()), this, SLOT(selectAll()));
     connect(setDrawMeshBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawMesh(int)));
     connect(setDrawVerticesBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawVertices(int)));
-    connect(setDrawPolylinesBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawPolylines(int)));
+    connect(polylineDrawModeGroup, SIGNAL(clicked(bool)), this, SLOT(setDrawPolylines(bool)));
+    connect(linearModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeLinear(bool)));
+    connect(CRModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeSmooth(bool)));
 
     connect(m_viewer, SIGNAL(setMeshSubdomains()), this, SLOT(setMeshSubDomains()));
     contentLayout->addWidget(m_displaySubdomainsBox);
@@ -151,6 +169,18 @@ void MorphoTetraDocWidget::setDrawVertices(int state) {
     m_viewer->setDrawVertices(state);
 }
 
-void MorphoTetraDocWidget::setDrawPolylines(int state){
+void MorphoTetraDocWidget::setDrawPolylines(bool state){
     m_viewer->setDrawPolylines(state);
+}
+
+void MorphoTetraDocWidget::setPolylineModeLinear(bool state) {
+    if (state) {
+        m_viewer->setPolylineDrawMode(0);
+    }
+}
+
+void MorphoTetraDocWidget::setPolylineModeSmooth(bool state) {
+    if (state) {
+        m_viewer->setPolylineDrawMode(1);
+    }
 }

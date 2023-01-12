@@ -5,25 +5,29 @@
 
 MeshModel::MeshModel(const char* filename){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
+
+    m_smoothPolylineSubdivisionNumber = 8.0f;
     initCGAL(filename);
 
-    m_verticesBufferPos = 0;
-    m_colorsBufferPos   = 2;
-    m_normalsBufferPos  = 1;
+    m_verticesBufferPos     = 0;
+    m_dimensionsBufferPos   = 2;
+    m_normalsBufferPos      = 1;
 
-    m_drawMesh = true;
-    m_drawWireFrame = false;
-    m_drawPoints = false;
-    m_drawPolylines = false;
-
-    cur_glFunctions->glGenVertexArrays(1,&m_VAO);
-    cur_glFunctions->glGenBuffers(1, &m_verticesBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_normalsBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_colorsBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_indexBuffer);
+    recomputeNormals();
 }
 
 MeshModel::~MeshModel(){}
+
+void MeshModel::initDrawingBuffers(ShaderProgram& renderingProgram){
+    renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_normalsBuffer);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_dimensionsBuffer);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_indexBuffer);
+
+    renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO_smooth_Catmull);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer_smooth_Catmull);
+}
 
 void MeshModel::initGLSL_vertices(QOpenGLExtraFunctions*  cur_glFunctions){
     if(DEBUGAPP) std::cout << "[Model] init GLSL vertices" << std::endl;
@@ -84,134 +88,79 @@ void MeshModel::initGLSL_normals(QOpenGLExtraFunctions*  cur_glFunctions){
     drawNormals.clear();
 }
 
-void MeshModel::initGLSL_colors(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, QColor>& colorMap){
-    if(DEBUGAPP) std::cout << "[Model] init GLSL colors : " << colorMap.size() << std::endl;
+void MeshModel::initGLSL_dimensions(QOpenGLExtraFunctions*  cur_glFunctions){
+    if(DEBUGAPP) std::cout << "[Model] init GLSL dimensions : " << m_verticesDimensions.size() << std::endl;
 
-    std::vector<float>  drawColors;
-    //drawColors.resize(m_vertices.size() * 3 * 2);
-    //drawColors.resize(m_subdomain_indices.size());
+    //for (int var = 0; var < 20; ++var) {
+    //    std::cout << "val dim : " << m_verticesDimensions[var] << std::endl;
+    //}
 
-
-    //int deb_second_color = m_vertices.size() * 3;
-    //std::vector<bool>  drawColorsBool;
-    //drawColorsBool.resize(m_vertices.size());
-
-    //std::vector<Subdomain_index>  drawColorsInd;
-    //drawColorsInd.resize(m_vertices.size());
-
-    std::map<Subdomain_index, QColor>::const_iterator itCol;
-    QColor color;
-    for(std::map<Subdomain_index, std::vector<int> >::iterator it = m_sortedTriangles.begin(); it != m_sortedTriangles.end() ; it ++){
-        Subdomain_index si = it->first;
-        itCol = colorMap.find(si);
-
-        if( itCol == colorMap.end() )
-            color.setHsvF(0.5, 1.,1.);
-        else
-            color =itCol->second;
-
-        drawColors.push_back(color.redF());
-        drawColors.push_back(color.greenF());
-        drawColors.push_back(color.blueF());
-
-        //for(unsigned int i = 0; i<it->second.size(); i++){
-        //    Triangle t = m_triangles[it->second[i]];
-        //    for(int el = 0; el < 3; el++){
-
-
-                //if(drawColorsBool[t[el]]){
-                //    if(si > drawColorsInd[t[el]]){
-                //        drawColors[deb_second_color + t[el]*3]      = color.redF();
-                //        drawColors[deb_second_color + t[el]*3+1]    = color.greenF();
-                //        drawColors[deb_second_color + t[el]*3+2]    = color.blueF();
-                //    }else{
-                //       //On écrase de telle sorte à avoir le plus petit sous-domaine qui a sa couleur en premier
-                //       float v_r =  drawColors[t[el]*3];
-                //       float v_g =  drawColors[t[el]*3+1];
-                //       float v_b =  drawColors[t[el]*3+2];
-
-                //       drawColors[t[el]*3]     = color.redF();
-                //       drawColors[t[el]*3+1]   = color.greenF();
-                //       drawColors[t[el]*3+2]   = color.blueF();
-
-                //       drawColors[deb_second_color + t[el]*3]      = v_r;
-                //       drawColors[deb_second_color + t[el]*3+1]    = v_g;
-                //       drawColors[deb_second_color + t[el]*3+2]    = v_b;
-                //    }
-                //}else{
-
-
-                    //drawColors[t[el]*3]     = color.redF();
-                    //drawColors[t[el]*3+1]   = color.greenF();
-                    //drawColors[t[el]*3+2]   = color.blueF();
-
-
-                //    drawColorsBool[t[el]] = true;
-                //    drawColorsInd[t[el]]  = si;
-                //}
-
-
-            //}
-        //}
-    }
-
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_colorsBuffer);
-    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, drawColors.size() * sizeof(float), &drawColors[0], GL_STATIC_DRAW);
-    cur_glFunctions->glVertexAttribPointer(m_colorsBufferPos, 3, GL_FLOAT, GL_FALSE,  3 * sizeof(float), (void*)0);
-    cur_glFunctions->glEnableVertexAttribArray(m_colorsBufferPos);
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_dimensionsBuffer);
+    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, m_verticesDimensions.size() * sizeof(int), &m_verticesDimensions[0], GL_STATIC_DRAW);
+    cur_glFunctions->glVertexAttribIPointer(m_dimensionsBufferPos, 1, GL_INT, 1.0 * sizeof(int), (void*)0);
+    cur_glFunctions->glEnableVertexAttribArray(m_dimensionsBufferPos);
     checkOpenGLError();
-
-    drawColors.clear();
-    //drawColorsBool.clear();
-    //drawColorsInd.clear();
 }
 
-void MeshModel::initGLSL_subdomains(QOpenGLExtraFunctions*  cur_glFunctions){
-    //TODO : mettre ne place un système de coloration et normalisation par triangles triés par sous-domaine
-    if(DEBUGAPP) std::cout << "[Model] init GLSL subdomains " << std::endl;
+void MeshModel::initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions){
+    if(DEBUGAPP) std::cout << "[Model] init GLSL vertices CATMULL" << std::endl;
 
-    std::vector<float>  drawColors;
-    drawColors.resize(m_vertices.size() * 3 * 2);
-    for(std::map<Subdomain_index, std::vector<int> >::iterator it = m_sortedTriangles.begin(); it != m_sortedTriangles.end() ; it ++){
-        Subdomain_index si = it->first;
-
+    std::vector<float>  drawVertices;
+    for(unsigned int i = 0; i<m_verticesSmoothPolylines.size(); i++){
+        drawVertices.push_back(m_verticesSmoothPolylines[i][0]);
+        drawVertices.push_back(m_verticesSmoothPolylines[i][1]);
+        drawVertices.push_back(m_verticesSmoothPolylines[i][2]);
     }
-
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_colorsBuffer);
-    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, drawColors.size() * sizeof(float), &drawColors[0], GL_STATIC_DRAW);
-    cur_glFunctions->glVertexAttribPointer(m_colorsBufferPos, 3, GL_FLOAT, GL_FALSE,  3 * sizeof(float), (void*)0);
-    cur_glFunctions->glEnableVertexAttribArray(m_colorsBufferPos);
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer_smooth_Catmull);
+    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, drawVertices.size() * sizeof(float), &drawVertices[0], GL_STATIC_DRAW);
+    cur_glFunctions->glVertexAttribPointer(m_verticesBufferPos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    cur_glFunctions->glEnableVertexAttribArray(m_verticesBufferPos);
     checkOpenGLError();
-
-    drawColors.clear();
-    //drawColorsBool.clear();
-    //drawColorsInd.clear();
+    drawVertices.clear();
 }
 
-void MeshModel::initGLSL(QOpenGLExtraFunctions*  cur_glFunctions){
+void MeshModel::initGLSL_Default(ShaderProgram& renderingProgram){
+    if(DEBUGAPP){
+        std::cout << "[Model] init GLSL Default" << std::endl;
+    }
+
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO);
+
+    initGLSL_vertices(renderingProgram.glFunctions);
+    renderingProgram.glFunctions->glEnableVertexAttribArray(m_normalsBufferPos);
+    initGLSL_dimensions(renderingProgram.glFunctions);
+
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    checkOpenGLError();
+}
+
+void MeshModel::initGLSL_Catmull(ShaderProgram& renderingProgram){
+    if(DEBUGAPP){
+        std::cout << "[Model] init GLSL Catmull" << std::endl;
+    }
+
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO_smooth_Catmull);
+    initGLSL_CatmullVertices(renderingProgram.glFunctions);
+
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    checkOpenGLError();
+}
+
+void MeshModel::initGLSL(ShaderProgram& renderingProgram){
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL" << std::endl;
 
         std::cout << "vertices l : " << m_vertices.size() << std::endl;
         std::cout << "triangles l : " << m_triangles.size() << std::endl;
         std::cout << "sortedTriangles l : " << m_sortedTriangles.size() << std::endl;
+
+        std::cout << "catmull vert : " << m_verticesSmoothPolylines.size() << std::endl;
     }
-    recomputeNormals();
 
-    cur_glFunctions->glBindVertexArray(m_VAO);
-
-    initGLSL_vertices();
-    //cur_glFunctions->glVertexAttribDivisor(m_verticesBufferPos,3);
-    //initGLSL_normals();
-
-    //Mais pour les couleurs
-    cur_glFunctions->glEnableVertexAttribArray(m_normalsBufferPos);
-    //cur_glFunctions->glEnableVertexAttribArray(m_normalsBufferPos);
-    //initGLSL_colors(colorMap);
-
-    cur_glFunctions->glBindVertexArray(0);
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
-    checkOpenGLError();
+    initGLSL_Default(renderingProgram);
+    initGLSL_Catmull(renderingProgram);
 
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL END" << std::endl;
@@ -219,10 +168,13 @@ void MeshModel::initGLSL(QOpenGLExtraFunctions*  cur_glFunctions){
         std::cout << "vertices buf : " << m_verticesBuffer << std::endl;
         std::cout << "index buf : " << m_indexBuffer << std::endl;
         std::cout << "normal buf : " << m_normalsBuffer << std::endl;
-        std::cout << "color buf : " << m_colorsBuffer << std::endl;
+        std::cout << "dim buf : " << m_dimensionsBuffer << std::endl;
+        std::cout << "vertices buf Catmull : " << m_verticesBuffer_smooth_Catmull << std::endl;
     }
-
 }
+
+
+
 
 void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     typedef CGAL::Mesh_triangulation_3<Mesh_domain>::type Triangulation;
@@ -245,9 +197,10 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     int VCount = 0;
 
     m_vertices.clear();
-    //    verticesDimensions.clear();
+    m_verticesDimensions.clear();
     m_vertices.resize(triangulation.number_of_vertices());
     m_verticesDimensions.resize(triangulation.number_of_vertices());
+
     //    verticesDimensions.resize(triangulation.number_of_vertices());
 
     int surf_v_count = 0;
@@ -370,6 +323,135 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
 
         }
     }
+
+
+    // Creation de nouvelle polyline smooth avec plus de points
+    m_verticesSmoothPolylines.clear();
+    m_sortedSmoothPolylines.clear();
+
+    std::vector<std::vector<bool>> reversed;
+    for (unsigned int i = 0; i < m_polyLines.size(); ++i) {
+        std::vector<bool> r_p;
+        std::vector<C3t3::Edge> cur_egrp = m_polyLines[i];
+
+        if(cur_egrp.size() > 1){
+            C3t3::Edge e0 = cur_egrp[0];
+            C3t3::Edge e1 = cur_egrp[1];
+
+            if(e0.first->vertex(e0.second) == e1.first->vertex(e1.second) || e0.first->vertex(e0.second) == e1.first->vertex(e1.third)){
+                r_p.push_back(true);
+            }else{
+                r_p.push_back(false);
+            }
+            for (int j = 1; j < cur_egrp.size(); ++j) {
+                e0 = cur_egrp[j-1];
+                e1 = cur_egrp[j];
+                if (e1.first->vertex(e1.second) == e0.first->vertex(e0.second) || e1.first->vertex(e1.second) == e0.first->vertex(e0.third)) {
+                    r_p.push_back(false);
+                }
+                else {
+                    r_p.push_back(true);
+                }
+            }
+        }else{
+            r_p.push_back(false);
+        }
+        reversed.push_back(r_p);
+    }
+
+    qglviewer::Vec p0, p1, p2, p3;
+    std::vector<qglviewer::Vec> tmpPoints;
+
+    std::vector<int> domains;
+    bool samePolyline;
+    for(unsigned int i = 0; i<m_polyLines.size(); i++) {
+        std::vector<C3t3::Edge> cur_egrp = m_polyLines[i];
+        if (cur_egrp.size() == 0) continue;
+        samePolyline = false;
+
+        if (reversed[i][0]) {
+            p1 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].third)->point());
+            p2 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].second)->point());
+        }
+        else {
+            p1 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].second)->point());
+            p2 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].third)->point());
+        }
+        p0 = p1 + (p1-p2);
+        for(unsigned int j = 0; j< cur_egrp.size(); j++) {
+            C3t3::Edge cur_edge = cur_egrp[j];
+            if (reversed[i][j]) {
+                p1 = pointToVec(cur_edge.first->vertex(cur_edge.third)->point());
+                p2 = pointToVec(cur_edge.first->vertex(cur_edge.second)->point());
+            }
+            else {
+                p1 = pointToVec(cur_edge.first->vertex(cur_edge.second)->point());
+                p2 = pointToVec(cur_edge.first->vertex(cur_edge.third)->point());
+            }
+
+            // 1. Catmull-Rom
+            if (j+1 < cur_egrp.size()) {
+                if (reversed[i][j+1]) {
+                    p3 = pointToVec(cur_egrp[j+1].first->vertex(cur_egrp[j+1].second)->point());
+                }
+                else {
+                    p3 = pointToVec(cur_egrp[j+1].first->vertex(cur_egrp[j+1].third)->point());
+                }
+            }
+            else {
+                p3 = p2 + (p2-p1);
+            }
+
+            tmpPoints.clear();
+            Catmull_Rom(tmpPoints, p0, p1, p2, p3, m_smoothPolylineSubdivisionNumber);
+
+            // 2. get domains
+            domains.clear();
+            Tr::Cell_circulator c = triangulation.incident_cells(cur_egrp[j]);
+            Tr::Cell_circulator done=c;
+            do{
+              C3t3::Cell_handle cell=c;
+              int n=(int)(cell->subdomain_index());
+              if(std::find(domains.begin(), domains.end(), n) == domains.end()){
+                domains.push_back(n);
+              }
+              c++;
+            }while(c != done);
+
+            // 3. Add points and domains
+
+            for (unsigned int k = 0; k < tmpPoints.size(); k++) {
+                std::cout << "SORTIE CATMULROM : " << tmpPoints[k][0] << ", "<<tmpPoints[k][1] <<", "<< tmpPoints[k][2] << std::endl;
+                m_verticesSmoothPolylines.push_back(tmpPoints[k]);
+
+                if (m_verticesSmoothPolylines.size() > 1 && samePolyline) {
+                    for(unsigned int l = 0; l<domains.size(); l++){
+                        m_sortedSmoothPolylines[domains[l]].push_back(m_verticesSmoothPolylines.size()-2);
+                        m_sortedSmoothPolylines[domains[l]].push_back(m_verticesSmoothPolylines.size()-1);
+                    }
+                }
+                if (!samePolyline) {
+                    samePolyline = true;
+                }
+            }
+
+            // 4. initialise next loop
+
+            p0 = p1;
+
+            // 5. Edge case
+            if (j == cur_egrp.size()-1) {
+                m_verticesSmoothPolylines.push_back(p2);
+
+                if (m_verticesSmoothPolylines.size() > 1 && samePolyline) {
+                    for(unsigned int l = 0; l<domains.size(); l++){
+                        m_sortedSmoothPolylines[domains[l]].push_back(m_verticesSmoothPolylines.size()-2);
+                        m_sortedSmoothPolylines[domains[l]].push_back(m_verticesSmoothPolylines.size()-1);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void MeshModel::initCGAL(const char* filename){
@@ -413,8 +495,11 @@ void MeshModel::initCGAL(const char* filename){
     }
 }
 
-void MeshModel::drawMesh(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
-    cur_glFunctions->glBindVertexArray(m_VAO);
+
+
+
+void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO);
 
     std::map<Subdomain_index, QColor>::const_iterator itCol;
     QColor color;
@@ -446,66 +531,93 @@ void MeshModel::drawMesh(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdom
 
             }
 
-            cur_glFunctions->glUniform3f(
-                        cur_glFunctions->glGetUniformLocation(cur_programID, "u_color")
+            renderingProgram.glFunctions->glUniform3f(
+                        renderingProgram.glFunctions->glGetUniformLocation(renderingProgram.programID, "u_color")
                         ,color.redF(),color.greenF(),color.blueF());
 
-            cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_normalsBuffer);
-            cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
-            cur_glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
+            renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_normalsBuffer);
+            renderingProgram.glFunctions->glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
+            renderingProgram.glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
 
-            cur_glFunctions->glDrawElements(GL_TRIANGLES,it->second.size() * 3,GL_UNSIGNED_INT, &drawIndex[0]);
+            renderingProgram.glFunctions->glDrawElements(GL_TRIANGLES,it->second.size() * 3,GL_UNSIGNED_INT, &drawIndex[0]);
 
 
             drawIndex.clear();
             delete[] drawNormals;
 
-            cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+            renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
             checkOpenGLError();
         }
     }
 
-    cur_glFunctions->glBindVertexArray(0);
-    cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void MeshModel::drawVerticies(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap) {
-    cur_glFunctions->glBindVertexArray(m_VAO);
+void MeshModel::drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap) {
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO);
 
-    for(std::map<Subdomain_index, std::vector<int>>::iterator it = m_sortedVertices.begin(); it != m_sortedVertices.end(); ++it) {
+    glPointSize(2.0f);
+
+    for(std::map<Subdomain_index, std::vector<unsigned int>>::iterator it = m_sortedVertices.begin(); it != m_sortedVertices.end(); ++it) {
         Subdomain_index si = it->first;
 
         if(displayMap[si]){
-            cur_glFunctions->glUniform1i(cur_glFunctions->glGetUniformLocation(cur_programID, "u_dimension"), 1);
-            glPointSize(10.0f);
-            cur_glFunctions->glDrawElements(GL_POINTS,it->second.size(),GL_UNSIGNED_INT, &it->second[0]);
+            //renderingProgram.glFunctions->glUniform1i(renderingProgram.glFunctions->glGetUniformLocation(renderingProgram.programID, "u_dimension"), 1);
+            renderingProgram.glFunctions->glDrawElements(GL_POINTS,it->second.size(),GL_UNSIGNED_INT, &it->second[0]);
         }
     }
 
-    cur_glFunctions->glBindVertexArray(0);
-    cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void MeshModel::drawPolylines(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap) {
-    cur_glFunctions->glBindVertexArray(m_VAO);
+void MeshModel::drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, int polylineDrawMode) {
+    if(polylineDrawMode == 0){
+        renderingProgram.glFunctions->glBindVertexArray(m_VAO);
+        glLineWidth(3.0f);
 
-    for(std::map<Subdomain_index, std::vector<unsigned int> >::iterator it = m_sortedPolyLines.begin(); it != m_sortedPolyLines.end() ; it ++  ){
-        Subdomain_index si = it->first;
+        for(std::map<Subdomain_index, std::vector<unsigned int> >::iterator it = m_sortedPolyLines.begin(); it != m_sortedPolyLines.end() ; it ++  ){
+            Subdomain_index si = it->first;
 
-        if(displayMap[si]){
-            cur_glFunctions->glUniform3f(
-                        cur_glFunctions->glGetUniformLocation(cur_programID, "u_color")
-                        ,1.0,.5,.2);
-            cur_glFunctions->glDrawElements(GL_LINES, it->second.size(),GL_UNSIGNED_INT, &(it->second[0]));
+            if(displayMap[si]){
+                //renderingProgram.glFunctions->glUniform1i(renderingProgram.glFunctions->glGetUniformLocation(renderingProgram.programID, "u_dimension"), 1);
+                renderingProgram.glFunctions->glDrawElements(GL_LINES, it->second.size(),GL_UNSIGNED_INT, &(it->second[0]));
+            }
         }
+    }else{
+//        std::vector<float>  drawVertices;
+//        for(unsigned int i = 0; i<m_verticesSmoothPolylines.size(); i++){
+//            drawVertices.push_back(m_verticesSmoothPolylines[i][0]);
+//            drawVertices.push_back(m_verticesSmoothPolylines[i][1]);
+//            drawVertices.push_back(m_verticesSmoothPolylines[i][2]);
+//        }
+
+        if(polylineDrawMode == 1){
+            renderingProgram.glFunctions->glBindVertexArray(m_VAO_smooth_Catmull);
+            glLineWidth(3.0f);
+
+            for(std::map<Subdomain_index, std::vector<unsigned int> >::iterator it = m_sortedSmoothPolylines.begin(); it != m_sortedSmoothPolylines.end() ; it ++  ){
+                Subdomain_index si = it->first;
+                if(displayMap[si]){
+                    renderingProgram.glFunctions->glDrawElements(GL_LINES, it->second.size(),GL_UNSIGNED_INT, &(it->second[0]));
+                }
+            }
+        }
+
+
+        renderingProgram.glFunctions->glDrawArrays(GL_POINTS,0, 3.0f*m_verticesSmoothPolylines.size());
     }
 
-    cur_glFunctions->glBindVertexArray(0);
-    cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+
+
 
 void MeshModel::recomputeNormals () {
     if(DEBUGAPP) std::cout << "[Model] recompute normals" << std::endl;

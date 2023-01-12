@@ -404,125 +404,130 @@ inline bool printProgramErrors(int program,QOpenGLExtraFunctions* glFunctions){
     return false;
 }
 
-inline std::string readShaderSource(std::string filename){
-    std::string content = "";
-    QString qFilename = QString::fromStdString(filename);
-    if (!QFile::exists(qFilename))
-        qFilename = ":" + qFilename;
-    if (!QFile::exists(qFilename)) {
-        std::cerr << "The shader " << filename << " doesn't exist!" << std::endl;
-        return "";
+
+struct ShaderProgram{
+
+    ShaderProgram(){}
+
+    inline std::string readShaderSource(std::string filename){
+        std::string content = "";
+        QString qFilename = QString::fromStdString(filename);
+        if (!QFile::exists(qFilename))
+            qFilename = ":" + qFilename;
+        if (!QFile::exists(qFilename)) {
+            std::cerr << "The shader " << filename << " doesn't exist!" << std::endl;
+            return "";
+        }
+
+        QFile file(qFilename);
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        std::string line;
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            line = in.readLine().toStdString();
+            content += line + " \n";
+        }
+        file.close();
+
+        //std::cout << content  << std::endl;
+        return content;
     }
 
-    QFile file(qFilename);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    std::string line;
-    QTextStream in(&file);
-    while (!in.atEnd()) {
-        line = in.readLine().toStdString();
-        content += line + " \n";
-    }
-    file.close();
+    inline void compileShaderProgram_VGF(QOpenGLExtraFunctions* glFunc,const char * v_path,const char * g_path, const char * f_path){
+        QFileInfo info_vert(v_path);
+        QFileInfo info_geom(g_path);
+        QFileInfo info_frag(f_path);
 
-    //std::cout << content  << std::endl;
-    return content;
-}
+        std::string vShaderPath = info_vert.absoluteFilePath().toStdString();
+        std::string gShaderPath = info_geom.absoluteFilePath().toStdString();
+        std::string fShaderPath = info_frag.absoluteFilePath().toStdString();
 
+        glFunctions = glFunc;
+        glEnable              ( GL_DEBUG_OUTPUT );
+        glFunctions->glDebugMessageCallback(&MessageCallback, 0 );
 
-inline void compileShaderProgram_VGF(QOpenGLContext** glContext, QOpenGLExtraFunctions** glFunctions, GLuint &programID, const char * v_path,const char * g_path, const char * f_path){
-    QFileInfo info_vert(v_path);
-    QFileInfo info_geom(g_path);
-    QFileInfo info_frag(f_path);
+        //=============== Create programs and link shaders
+        programID = glFunctions->glCreateProgram();
+        std::string content = readShaderSource(vShaderPath);
 
-    std::string vShaderPath = info_vert.absoluteFilePath().toStdString();
-    std::string gShaderPath = info_geom.absoluteFilePath().toStdString();
-    std::string fShaderPath = info_frag.absoluteFilePath().toStdString();
+        if (!content.empty()) {
+             GLuint vShader = glFunctions->glCreateShader(GL_VERTEX_SHADER);
+             const char* src = content.c_str();
+             glFunctions->glShaderSource(vShader, 1, &src, NULL);
+             glFunctions->glCompileShader(vShader);
+             glFunctions->glAttachShader(programID, vShader);
+             printShaderErrors(vShader,glFunctions);
+        }
 
-    *glContext = QOpenGLContext::currentContext();
-    *glFunctions = (*glContext)->extraFunctions();
-    glEnable              ( GL_DEBUG_OUTPUT );
-    (*glFunctions)->glDebugMessageCallback(&MessageCallback, 0 );
+        content = readShaderSource(gShaderPath);
+        if (!content.empty()) {
+             GLuint gShader = glFunctions->glCreateShader(GL_GEOMETRY_SHADER);
+             const char* src = content.c_str();
+             glFunctions->glShaderSource(gShader, 1, &src, NULL);
+             glFunctions->glCompileShader(gShader);
+             glFunctions->glAttachShader(programID, gShader);
+             printShaderErrors(gShader,glFunctions);
+        }
 
-    //=============== Create programs and link shaders
-    programID = (*glFunctions)->glCreateProgram();
-    std::string content = readShaderSource(vShaderPath);
+        content = readShaderSource(fShaderPath);
+        if (!content.empty()) {
+             GLuint fShader = glFunctions->glCreateShader(GL_FRAGMENT_SHADER);
+             const char* src = content.c_str();
+             glFunctions->glShaderSource(fShader, 1, &src, NULL);
+             glFunctions->glCompileShader(fShader);
+             glFunctions->glAttachShader(programID, fShader);
+             printShaderErrors(fShader,glFunctions);
+        }
 
-    if (!content.empty()) {
-         GLuint vShader = (*glFunctions)->glCreateShader(GL_VERTEX_SHADER);
-         const char* src = content.c_str();
-         (*glFunctions)->glShaderSource(vShader, 1, &src, NULL);
-         (*glFunctions)->glCompileShader(vShader);
-         (*glFunctions)->glAttachShader(programID, vShader);
-         printShaderErrors(vShader,*glFunctions);
-    }
-
-    content = readShaderSource(gShaderPath);
-    if (!content.empty()) {
-         GLuint gShader = (*glFunctions)->glCreateShader(GL_GEOMETRY_SHADER);
-         const char* src = content.c_str();
-         (*glFunctions)->glShaderSource(gShader, 1, &src, NULL);
-         (*glFunctions)->glCompileShader(gShader);
-         (*glFunctions)->glAttachShader(programID, gShader);
-         printShaderErrors(gShader,*glFunctions);
-    }
-
-    content = readShaderSource(fShaderPath);
-    if (!content.empty()) {
-         GLuint fShader = (*glFunctions)->glCreateShader(GL_FRAGMENT_SHADER);
-         const char* src = content.c_str();
-         (*glFunctions)->glShaderSource(fShader, 1, &src, NULL);
-         (*glFunctions)->glCompileShader(fShader);
-         (*glFunctions)->glAttachShader(programID, fShader);
-         printShaderErrors(fShader,*glFunctions);
+        glFunctions->glLinkProgram(programID);
+        glFunctions->glUseProgram(programID);
+        printProgramErrors(programID,glFunctions);
+        checkOpenGLError();
     }
 
-    (*glFunctions)->glLinkProgram(programID);
-    (*glFunctions)->glUseProgram(programID);
-    printProgramErrors(programID,*glFunctions);
-    checkOpenGLError();
-}
+    inline void compileShaderProgram_VF(QOpenGLExtraFunctions* glFunc, const char * v_path, const char * f_path){
+        QFileInfo info_vert(v_path);
+        QFileInfo info_frag(f_path);
+
+        std::string vShaderPath = info_vert.absoluteFilePath().toStdString();
+        std::string fShaderPath = info_frag.absoluteFilePath().toStdString();
 
 
-inline void compileShaderProgram_VF(QOpenGLContext** glContext, QOpenGLExtraFunctions** glFunctions, GLuint &programID, const char * v_path, const char * f_path){
-    QFileInfo info_vert(v_path);
-    QFileInfo info_frag(f_path);
+        glFunctions = glFunc;
+        glEnable              ( GL_DEBUG_OUTPUT );
+        glFunctions->glDebugMessageCallback(&MessageCallback, 0 );
 
-    std::string vShaderPath = info_vert.absoluteFilePath().toStdString();
-    std::string fShaderPath = info_frag.absoluteFilePath().toStdString();
+        //=============== Create programs and link shaders
+        programID = glFunctions->glCreateProgram();
+        std::string content = readShaderSource(vShaderPath);
 
+        if (!content.empty()) {
+             GLuint vShader = glFunctions->glCreateShader(GL_VERTEX_SHADER);
+             const char* src = content.c_str();
+             glFunctions->glShaderSource(vShader, 1, &src, NULL);
+             glFunctions->glCompileShader(vShader);
+             glFunctions->glAttachShader(programID, vShader);
+             printShaderErrors(vShader,glFunctions);
+        }
+        content = readShaderSource(fShaderPath);
+        if (!content.empty()) {
+             GLuint fShader = glFunctions->glCreateShader(GL_FRAGMENT_SHADER);
+             const char* src = content.c_str();
+             glFunctions->glShaderSource(fShader, 1, &src, NULL);
+             glFunctions->glCompileShader(fShader);
+             glFunctions->glAttachShader(programID, fShader);
+             printShaderErrors(fShader,glFunctions);
+        }
+        glFunctions->glLinkProgram(programID);
+        glFunctions->glUseProgram(programID);
 
-
-    *glContext = QOpenGLContext::currentContext();
-    *glFunctions = (*glContext)->extraFunctions();
-    glEnable              ( GL_DEBUG_OUTPUT );
-    (*glFunctions)->glDebugMessageCallback(&MessageCallback, 0 );
-
-    //=============== Create programs and link shaders
-    programID = (*glFunctions)->glCreateProgram();
-    std::string content = readShaderSource(vShaderPath);
-
-    if (!content.empty()) {
-         GLuint vShader = (*glFunctions)->glCreateShader(GL_VERTEX_SHADER);
-         const char* src = content.c_str();
-         (*glFunctions)->glShaderSource(vShader, 1, &src, NULL);
-         (*glFunctions)->glCompileShader(vShader);
-         (*glFunctions)->glAttachShader(programID, vShader);
-         printShaderErrors(vShader,*glFunctions);
+        printProgramErrors(programID,glFunctions);
+        checkOpenGLError();
     }
-    content = readShaderSource(fShaderPath);
-    if (!content.empty()) {
-         GLuint fShader = (*glFunctions)->glCreateShader(GL_FRAGMENT_SHADER);
-         const char* src = content.c_str();
-         (*glFunctions)->glShaderSource(fShader, 1, &src, NULL);
-         (*glFunctions)->glCompileShader(fShader);
-         (*glFunctions)->glAttachShader(programID, fShader);
-         printShaderErrors(fShader,*glFunctions);
-    }
-    (*glFunctions)->glLinkProgram(programID);
-    (*glFunctions)->glUseProgram(programID);
 
-    printProgramErrors(programID,*glFunctions);
-    checkOpenGLError();
-}
+
+    QOpenGLExtraFunctions* glFunctions;
+    GLuint programID;
+};
 
 #endif // GLSL_BASICFUNCTIONS_H

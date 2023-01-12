@@ -1,16 +1,18 @@
 #ifndef MESHMODEL_H
 #define MESHMODEL_H
 
-#include "CGAL/cgal_headers.h"
+
 #include "GLSL/glsl_basicfunctions.h"
-#include "GLSL/GLUtilityMethods.h"
+#include <QGLViewer/qglviewer.h>
+#include <QGLViewer/vec.h>
+#include <QGLViewer/camera.h>
+
+#include "Math_utilitiesfnc.h"
+
+#include "CGAL/cgal_headers.h"
 #include "CGAL/Tetrahedron.h"
 #include "CGAL/Triangle.h"
 
-
-#include <QGLViewer/qglviewer.h>
-#include <QGLViewer/vec.h>>
-#include <QGLViewer/camera.h>
 
 #include <set>
 #include <map>
@@ -27,6 +29,7 @@ private :
     std::vector<Surface_index>         m_surface_indices;
 
     std::vector <qglviewer::Vec>    m_vertices;
+    std::vector <qglviewer::Vec>    m_verticesSmoothPolylines;
     std::vector <Triangle>          m_triangles;
     std::vector <Tetrahedron>       m_tetrahedra;
 
@@ -40,24 +43,33 @@ private :
     std::map <Subdomain_index, std::vector<int> > m_sortedTriangles;
     std::map <Subdomain_index, std::vector<int> > m_sortedTetrahedra;
     std::map <Subdomain_index, std::vector<unsigned int> > m_sortedPolyLines;
+    std::map <Subdomain_index, std::vector<unsigned int> > m_sortedSmoothPolylines;
 
     std::vector<qglviewer::Vec>                             m_trianglesNormals;
     std::vector<std::map<Subdomain_index, qglviewer::Vec> > m_verticesNormals;
     std::vector<int> m_CGAL_envelop;
 
 
-    GLuint m_VAO, m_verticesBuffer, m_colorsBuffer, m_colorsBuffer2, m_normalsBuffer, m_normalsBuffer2, m_indexBuffer;
-    GLuint m_verticesBufferPos, m_colorsBufferPos, m_normalsBufferPos;
+    GLuint m_VAO, m_verticesBuffer, m_dimensionsBuffer, m_normalsBuffer, m_indexBuffer;
+    GLuint m_verticesBufferPos, m_colorsBufferPos, m_normalsBufferPos,m_dimensionsBufferPos;
+
+    GLuint m_VAO_smooth_Catmull, m_verticesBuffer_smooth_Catmull;
+
+    float m_smoothPolylineSubdivisionNumber;
 
 protected :
     void computeFacetsNormals();
     void computeFacetNormal(int t, qglviewer::Vec& normal);
     void computeVerticesNormals(unsigned int weight);
 
-    void initGLSL_colors(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, QColor>& colorMap);
+    void initGLSL_dimensions(QOpenGLExtraFunctions*  cur_glFunctions);
     void initGLSL_vertices(QOpenGLExtraFunctions*  cur_glFunctions);
     void initGLSL_normals(QOpenGLExtraFunctions*  cur_glFunctions);
-    void initGLSL_subdomains(QOpenGLExtraFunctions*  cur_glFunctions);
+
+    void initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions);
+
+    void initGLSL_Default(ShaderProgram& renderingProgram);
+    void initGLSL_Catmull(ShaderProgram& renderingProgram);
 
     void CGALGeometry(C3t3 & m_c3t3);
 
@@ -68,16 +80,15 @@ public:
     MeshModel(const char* filename);
     virtual ~MeshModel();
 
-    void initGLSL(QOpenGLExtraFunctions*  cur_glFunctions);
+    void initDrawingBuffers(ShaderProgram& renderingProgram);
+    void initGLSL(ShaderProgram& renderingProgram);
     void initCGAL(const char* filename);
 
-    void drawMesh(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
-    void drawVerticies(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap);
-    void drawPolylines(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap);
+    void drawMesh(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
+    void drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap);
+    void drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, int polylineDrawMode);
 
     void recomputeNormals();
-
-    static void computeShaderPrograms();
 
     std::vector<std::vector<C3t3::Edge>> & getPolyLines(){return m_polyLines;}
     const std::vector<std::vector<C3t3::Edge>> & getPolyLines() const {return m_polyLines;}

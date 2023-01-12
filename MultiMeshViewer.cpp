@@ -5,8 +5,8 @@
 
 MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_meshes.push_back(MeshModel("data/out.mesh"));
-    m_curModel = 0;
 
+    m_curModel = 0;
     const std::vector<Subdomain_index> & subdomain_indices = m_meshes[m_curModel].getSubdomainsIndex();
     m_displayMap.clear();
     m_colorMap.clear();
@@ -21,6 +21,10 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
         }
     }
 
+    m_drawWireFrame= false;
+    m_drawMesh= true;
+    m_drawPoints= false;
+    m_drawPolylines = false;
     //help();
 }
 
@@ -28,34 +32,37 @@ MultiMeshViewer::~MultiMeshViewer(){
     clear();
 }
 
-
-void MultiMeshViewer::initMatrix(QOpenGLExtraFunctions*  cur_glFunctions){
+void MultiMeshViewer::initMatrix(ShaderProgram & program){
     float pMatrix[16];
     float mvMatrix[16];
     camera()->getProjectionMatrix(pMatrix);
     camera()->getModelViewMatrix(mvMatrix);
 
-    cur_glFunctions->glUniformMatrix4fv(
-                cur_glFunctions->glGetUniformLocation(cur_programID, "proj_matrix")
+    program.glFunctions->glUniformMatrix4fv(
+                program.glFunctions->glGetUniformLocation(program.programID, "proj_matrix")
                 ,1, GL_FALSE, pMatrix);
-    cur_glFunctions->glUniformMatrix4fv(
-                cur_glFunctions->glGetUniformLocation(cur_programID, "mv_matrix")
+    program.glFunctions->glUniformMatrix4fv(
+                program.glFunctions->glGetUniformLocation(program.programID, "mv_matrix")
                 ,1, GL_FALSE, mvMatrix);
 }
 
 void MultiMeshViewer::compileRenderingPrograms(){
-    compileShaderProgram_VF(&mesh_glContext, &cur_glFunctions, cur_programID, "./GLSL/shaders/morpho.vert", "./GLSL/shaders/morpho.frag");
-    compileShaderProgram_VF(&cur_glContext, &cur_glFunctions, cur_programID, "./GLSL/shaders/morpho.vert", "./GLSL/shaders/morpho.frag");
+    QOpenGLExtraFunctions* glFunctions = QOpenGLContext::currentContext()->extraFunctions();
+    mesh_glProgram.compileShaderProgram_VF(glFunctions,"./GLSL/shaders/morpho.vert", "./GLSL/shaders/morpho.frag");
+    //glFunctions->glUseProgram(0);
+    pointNlines_glProgram.compileShaderProgram_VF(glFunctions,"./GLSL/shaders/morpho_simple.vert", "./GLSL/shaders/morpho_simple.frag");
 
-    cur_glFunctions->glUseProgram(cur_programID);
-    GLTools::initLightsDefault(cur_programID,cur_glFunctions);
-    MLoadStandard(cur_programID,cur_glFunctions, GLTools::MY_MATERIAL_01);
-    cur_glFunctions->glUseProgram(0);
+    glFunctions->glUseProgram(mesh_glProgram.programID);
+    GLTools::initLightsDefault(mesh_glProgram.programID,mesh_glProgram.glFunctions);
+    MLoadStandard(mesh_glProgram.programID,mesh_glProgram.glFunctions, GLTools::MY_MATERIAL_01);
+    glFunctions->glUseProgram(0);
 
     if(DEBUGAPP){
-        std::cout << "curglcontext : " << cur_glContext << std::endl;
-        std::cout << "curglfunctions : " << cur_glFunctions << std::endl;
-        std::cout << "curprog : " << cur_programID << std::endl;
+        std::cout << "meshglfunctions : " << mesh_glProgram.glFunctions << std::endl;
+        std::cout << "meshprog : " << mesh_glProgram.programID << std::endl;
+
+        std::cout << "pnlglfunctions : " << pointNlines_glProgram.glFunctions << std::endl;
+        std::cout << "pnlprog : " << pointNlines_glProgram.programID << std::endl;
     }
 }
 
@@ -86,19 +93,26 @@ void MultiMeshViewer::setDrawMesh(int state) {
 }
 
 void MultiMeshViewer::setDrawVertices(int state) {
-    m_meshes[i].m_drawPoints = state;
+    m_drawPoints = state;
     update();
 }
 
 void MultiMeshViewer::setDrawPolylines(int state) {
-    m_meshes[i].m_drawPolylines = state;
+    m_drawPolylines = state;
     update();
 }
+
+void MultiMeshViewer::setPolylineDrawMode(int mode) {
+    m_polylineDrawMode = mode;
+    update();
+}
+
 
 void MultiMeshViewer::init(){
     restoreStateFromFile();
     setManipulatedFrame(new qglviewer::ManipulatedFrame());
-    MeshModel::computeShaderPrograms();
+
+    compileRenderingPrograms();
     initAllMesh();
 
     initLigthAndMaterial();
@@ -121,23 +135,25 @@ void MultiMeshViewer::draw(){
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 
-    compileRenderingPrograms();
     if(m_drawMesh){
-        cur_glFunctions->glUseProgram(mesh_programID);
-        glEnable(GL_DEPTH_TEST);
-        m_meshes[m_curModel].drawMesh(mesh_glFunctions,m_displayMap,m_colorMap);
+        mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
+        initMatrix(mesh_glProgram);
+        //glEnable(GL_DEPTH_TEST);
+        m_meshes[m_curModel].drawMesh(mesh_glProgram,m_displayMap,m_colorMap);
     }
 
     if(m_drawPolylines){
-        cur_glFunctions->glUseProgram(mesh_programID);
+        pointNlines_glProgram.glFunctions->glUseProgram(pointNlines_glProgram.programID);
+        initMatrix(pointNlines_glProgram);
         glDisable(GL_DEPTH_TEST);
-        m_meshes[m_curModel].drawPolylines(pointNlines_glFunctions,m_displayMap);
+        m_meshes[m_curModel].drawPolylines(pointNlines_glProgram,m_displayMap, m_polylineDrawMode);
     }
 
     if(m_drawPoints){
-        cur_glFunctions->glUseProgram(mesh_programID);
+        pointNlines_glProgram.glFunctions->glUseProgram(pointNlines_glProgram.programID);
+        initMatrix(pointNlines_glProgram);
         glDisable(GL_DEPTH_TEST);
-        m_meshes[m_curModel].drawPolylines(pointNlines_glFunctions,m_displayMap);
+        m_meshes[m_curModel].drawVerticies(pointNlines_glProgram,m_displayMap);
     }
 }
 
@@ -160,10 +176,14 @@ void MultiMeshViewer::initCurrentDisplayedMesh(){
 }
 void MultiMeshViewer::initAllMesh(){
     for(unsigned int i  = 0; i< m_meshes.size(); i++){
-        cur_glFunctions->glUseProgram(mesh_programID);
-        m_meshes[i].initGLSL(mesh_glFunctions);
-        cur_glFunctions->glUseProgram(pointNlines_programID);
-        m_meshes[i].initGLSL(pointNlines_glFunctions);
+        m_meshes[i].initDrawingBuffers(mesh_glProgram);
+
+        mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
+        m_meshes[i].initGLSL(mesh_glProgram);
+
+        pointNlines_glProgram.glFunctions->glUseProgram(pointNlines_glProgram.programID);
+        m_meshes[i].initGLSL(pointNlines_glProgram);
+        pointNlines_glProgram.glFunctions->glUseProgram(0);
     }
 }
 

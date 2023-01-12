@@ -11,6 +11,7 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QBoxLayout>
+#include <QRadioButton>
 
 #include "MultiMeshViewer.h"
 
@@ -44,7 +45,9 @@ public slots :
 
     void setDrawMesh(int state);
     void setDrawVertices(int state);
-    void setDrawPolylines(int state);
+    void setDrawPolylines(bool state);
+    void setPolylineModeLinear(bool state);
+    void setPolylineModeSmooth(bool state);
 };
 
 #endif // MORPHOTETRADOCWIDGET_H

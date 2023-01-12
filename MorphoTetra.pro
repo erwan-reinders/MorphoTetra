@@ -18,28 +18,29 @@ TEMPLATE = app
 MOC_DIR = ./moc
 OBJECTS_DIR = ./obj
 
-SOURCES += Main.cpp \
+SOURCES += MultiMeshViewer.cpp \
+    Main.cpp \
     MainWindow.cpp \
     MeshModel.cpp \
     MorphoTetraDocWidget.cpp \
-    MultiMeshViewer.cpp \
-
     #Window.cpp \
     #MeshViewer.cpp \
     #DisplayDockWidget.cpp
 
-HEADERS += CGAL/cgal_basicfunctions.h \
+HEADERS += CGAL/cgal_headers.h \
+    CGAL/Tetrahedron.h \
+    CGAL/Triangle.h \
+    CGAL/cgal_basicfunctions.h \
     GLSL/glsl_basicfunctions.h \
-    MainWindow.h \
+    Math_utilitiesfnc.h \
     MeshModel.h \
     MorphoTetraDocWidget.h \
     MultiMeshViewer.h \
+    MainWindow.h
     #MeshViewer.h \
     #Window.h \
     #DisplayDockWidget.h \
-    CGAL/cgal_headers.h \
-    CGAL/Tetrahedron.h \
-    CGAL/Triangle.h \
+
 
 
 
@@ -63,7 +64,7 @@ LIBS += -L$${VCPKG_CGAL_P}\lib -lgmp
 LIBS += -L$${VCPKG_CGAL_P}\lib -lgmpxx
 
 
-LIB_DIR = $${QGLViewer_P}/QGLViewer
+LIB_DIR = $${QGLViewer_P}\QGLViewer
 #LIBQGLViewer integration
 win32 {
         # Seems to be needed for Visual Studio with Intel compiler
