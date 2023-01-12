@@ -41,8 +41,10 @@ public slots :
     void discardAll();
     void setMeshSubDomains();
     void addMeshSubDomains(const std::map<Subdomain_index, QColor> & colors);
+
     void setDrawMesh(int state);
     void setDrawVertices(int state);
+    void setDrawPolylines(int state);
 };
 
 #endif // MORPHOTETRADOCWIDGET_H

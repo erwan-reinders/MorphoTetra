@@ -3,27 +3,6 @@
 
 #include "CGAL/cgal_basicfunctions.h"
 
-QOpenGLContext* MeshModel::cur_glContext = 0;
-QOpenGLExtraFunctions* MeshModel::cur_glFunctions = 0;
-GLuint MeshModel::cur_programID = 0;
-
-void MeshModel::computeShaderPrograms(){
-    if(DEBUGAPP) std::cout << "[Model] compute shader program" << std::endl;
-
-    compileShaderProgram_VF(&cur_glContext, &cur_glFunctions, cur_programID, "./GLSL/shaders/morpho.vert", "./GLSL/shaders/morpho.frag");
-
-    cur_glFunctions->glUseProgram(cur_programID);
-    GLTools::initLightsDefault(cur_programID,cur_glFunctions);
-    MLoadStandard(cur_programID,cur_glFunctions, GLTools::MY_MATERIAL_01);
-    cur_glFunctions->glUseProgram(0);
-
-    if(DEBUGAPP){
-        std::cout << "curglcontext : " << cur_glContext << std::endl;
-        std::cout << "curglfunctions : " << cur_glFunctions << std::endl;
-        std::cout << "curprog : " << cur_programID << std::endl;
-    }
-}
-
 MeshModel::MeshModel(const char* filename){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
     initCGAL(filename);
@@ -36,11 +15,17 @@ MeshModel::MeshModel(const char* filename){
     m_drawWireFrame = false;
     m_drawPoints = false;
     m_drawPolylines = false;
+
+    cur_glFunctions->glGenVertexArrays(1,&m_VAO);
+    cur_glFunctions->glGenBuffers(1, &m_verticesBuffer);
+    cur_glFunctions->glGenBuffers(1, &m_normalsBuffer);
+    cur_glFunctions->glGenBuffers(1, &m_colorsBuffer);
+    cur_glFunctions->glGenBuffers(1, &m_indexBuffer);
 }
 
 MeshModel::~MeshModel(){}
 
-void MeshModel::initGLSL_vertices(){
+void MeshModel::initGLSL_vertices(QOpenGLExtraFunctions*  cur_glFunctions){
     if(DEBUGAPP) std::cout << "[Model] init GLSL vertices" << std::endl;
 
     std::vector<float>  drawVertices;
@@ -69,7 +54,7 @@ void MeshModel::initGLSL_vertices(){
     drawVertices.clear();
 }
 
-void MeshModel::initGLSL_normals(){
+void MeshModel::initGLSL_normals(QOpenGLExtraFunctions*  cur_glFunctions){
     if(DEBUGAPP) std::cout << "[Model] init GLSL normals" << std::endl;
 
     std::vector<float>  drawNormals;
@@ -99,7 +84,7 @@ void MeshModel::initGLSL_normals(){
     drawNormals.clear();
 }
 
-void MeshModel::initGLSL_colors(std::map<Subdomain_index, QColor>& colorMap){
+void MeshModel::initGLSL_colors(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, QColor>& colorMap){
     if(DEBUGAPP) std::cout << "[Model] init GLSL colors : " << colorMap.size() << std::endl;
 
     std::vector<float>  drawColors;
@@ -181,7 +166,7 @@ void MeshModel::initGLSL_colors(std::map<Subdomain_index, QColor>& colorMap){
     //drawColorsInd.clear();
 }
 
-void MeshModel::initGLSL_subdomains(){
+void MeshModel::initGLSL_subdomains(QOpenGLExtraFunctions*  cur_glFunctions){
     //TODO : mettre ne place un système de coloration et normalisation par triangles triés par sous-domaine
     if(DEBUGAPP) std::cout << "[Model] init GLSL subdomains " << std::endl;
 
@@ -203,7 +188,7 @@ void MeshModel::initGLSL_subdomains(){
     //drawColorsInd.clear();
 }
 
-void MeshModel::initGLSL(std::map<Subdomain_index, QColor>& colorMap){
+void MeshModel::initGLSL(QOpenGLExtraFunctions*  cur_glFunctions){
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL" << std::endl;
 
@@ -211,18 +196,7 @@ void MeshModel::initGLSL(std::map<Subdomain_index, QColor>& colorMap){
         std::cout << "triangles l : " << m_triangles.size() << std::endl;
         std::cout << "sortedTriangles l : " << m_sortedTriangles.size() << std::endl;
     }
-
     recomputeNormals();
-
-    cur_glFunctions->glUseProgram(cur_programID);
-
-
-    cur_glFunctions->glGenVertexArrays(1,&m_VAO);
-
-    cur_glFunctions->glGenBuffers(1, &m_verticesBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_normalsBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_colorsBuffer);
-    cur_glFunctions->glGenBuffers(1, &m_indexBuffer);
 
     cur_glFunctions->glBindVertexArray(m_VAO);
 
@@ -234,7 +208,6 @@ void MeshModel::initGLSL(std::map<Subdomain_index, QColor>& colorMap){
     cur_glFunctions->glEnableVertexAttribArray(m_normalsBufferPos);
     //cur_glFunctions->glEnableVertexAttribArray(m_normalsBufferPos);
     //initGLSL_colors(colorMap);
-
 
     cur_glFunctions->glBindVertexArray(0);
     cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -250,7 +223,6 @@ void MeshModel::initGLSL(std::map<Subdomain_index, QColor>& colorMap){
     }
 
 }
-
 
 void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     typedef CGAL::Mesh_triangulation_3<Mesh_domain>::type Triangulation;
@@ -354,7 +326,6 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     m_sortedTriangles.clear();
     m_sortedTetrahedra.clear();
 
-
     for(unsigned int t = 0 ; t < m_triangles.size() ; t++){
         m_sortedTriangles[ m_triangles_subdomain_ids[t] ].push_back(t);
     }
@@ -371,6 +342,34 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     }
     //if(noZero) subdomain_indices.push_back(0);
     std::sort(m_subdomain_indices.begin() , m_subdomain_indices.end());
+
+
+    //Compute polylines index for drawing
+    m_sortedPolyLines.clear();
+
+    for(unsigned int i = 0; i<m_polyLines.size(); i++){
+        std::vector<C3t3::Edge> cur_egrp = m_polyLines[i];
+
+        for(unsigned int j = 0; j< cur_egrp.size(); j++){
+            std::vector<int> domains;
+            Tr::Cell_circulator c = triangulation.incident_cells(cur_egrp[j]);
+            Tr::Cell_circulator done=c;
+            do{
+              C3t3::Cell_handle cell=c;
+              int n=(int)(cell->subdomain_index());
+              if(std::find(domains.begin(), domains.end(), n) == domains.end()){
+                domains.push_back(n);
+              }
+              c++;
+            }while(c != done);
+
+            for(unsigned int k = 0; k<domains.size(); k++){
+                m_sortedPolyLines[domains[k]].push_back(VMap[cur_egrp[j].first->vertex(cur_egrp[j].second)]);
+                m_sortedPolyLines[domains[k]].push_back(VMap[cur_egrp[j].first->vertex(cur_egrp[j].third)]);
+            }
+
+        }
+    }
 }
 
 void MeshModel::initCGAL(const char* filename){
@@ -414,7 +413,8 @@ void MeshModel::initCGAL(const char* filename){
     }
 }
 
-void MeshModel::drawMesh(std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
+void MeshModel::drawMesh(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
+    cur_glFunctions->glBindVertexArray(m_VAO);
 
     std::map<Subdomain_index, QColor>::const_iterator itCol;
     QColor color;
@@ -464,105 +464,44 @@ void MeshModel::drawMesh(std::map<Subdomain_index, bool> displayMap, std::map<Su
             checkOpenGLError();
         }
     }
+
+    cur_glFunctions->glBindVertexArray(0);
+    cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void MeshModel::drawVerticies(std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
-    std::vector<unsigned int> drawIndex;
-    std::map<Subdomain_index, QColor>::const_iterator itCol;
-    QColor color;
-    float* drawNormals;
+void MeshModel::drawVerticies(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap) {
+    cur_glFunctions->glBindVertexArray(m_VAO);
+
     for(std::map<Subdomain_index, std::vector<int>>::iterator it = m_sortedVertices.begin(); it != m_sortedVertices.end(); ++it) {
         Subdomain_index si = it->first;
 
         if(displayMap[si]){
-            drawNormals = new float[it->second.size()*3]{};
-
-            itCol = colorMap.find(si);
-            if( itCol == colorMap.end() )
-                color.setHsvF(0.5, 1.,1.);
-            else
-                color = itCol->second;
-
-            drawIndex.reserve(it->second.size());
-            for (unsigned int v = 0; v < it->second.size(); ++v) {
-                unsigned int vertice = it->second[v];
-                drawIndex.push_back(vertice);
-
-                drawNormals[v*3]     += (m_verticesNormals[vertice][si][0]);
-                drawNormals[v*3+1]   += (m_verticesNormals[vertice][si][1]);
-                drawNormals[v*3+2]   += (m_verticesNormals[vertice][si][2]);
-            }
-
-            cur_glFunctions->glUniform3f(
-                        cur_glFunctions->glGetUniformLocation(cur_programID, "u_color")
-                        ,color.redF(),color.greenF(),color.blueF());
-
-
+            cur_glFunctions->glUniform1i(cur_glFunctions->glGetUniformLocation(cur_programID, "u_dimension"), 1);
             glPointSize(10.0f);
-
-            cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_normalsBuffer);
-            cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, it->second.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
-            cur_glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
-
-            cur_glFunctions->glDrawElements(GL_POINTS,it->second.size(),GL_UNSIGNED_INT, &drawIndex[0]);
-
-            drawIndex.clear();
-
-            cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
-            checkOpenGLError();
+            cur_glFunctions->glDrawElements(GL_POINTS,it->second.size(),GL_UNSIGNED_INT, &it->second[0]);
         }
     }
+
+    cur_glFunctions->glBindVertexArray(0);
+    cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void MeshModel::drawPolylines(std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
-
-}
-
-void MeshModel::draw(qglviewer::Camera *camera, std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap){
-    cur_glFunctions->glUseProgram(cur_programID);
-
-    float pMatrix[16];
-    float mvMatrix[16];
-    camera->getProjectionMatrix(pMatrix);
-    camera->getModelViewMatrix(mvMatrix);
-
-    cur_glFunctions->glUniformMatrix4fv(
-                cur_glFunctions->glGetUniformLocation(cur_programID, "proj_matrix")
-                ,1, GL_FALSE, pMatrix);
-    cur_glFunctions->glUniformMatrix4fv(
-                cur_glFunctions->glGetUniformLocation(cur_programID, "mv_matrix")
-                ,1, GL_FALSE, mvMatrix);
-
+void MeshModel::drawPolylines(QOpenGLExtraFunctions*  cur_glFunctions,std::map<Subdomain_index, bool> displayMap) {
     cur_glFunctions->glBindVertexArray(m_VAO);
 
+    for(std::map<Subdomain_index, std::vector<unsigned int> >::iterator it = m_sortedPolyLines.begin(); it != m_sortedPolyLines.end() ; it ++  ){
+        Subdomain_index si = it->first;
 
-    //GLTools::initLightsDefault(cur_programID,cur_glFunctions);
-    //MLoadStandard(cur_programID,cur_glFunctions, GLTools::MY_MATERIAL_01);
-
-    if (m_drawMesh) {
-        glEnable(GL_DEPTH_TEST);
-        drawMesh(displayMap, colorMap);
+        if(displayMap[si]){
+            cur_glFunctions->glUniform3f(
+                        cur_glFunctions->glGetUniformLocation(cur_programID, "u_color")
+                        ,1.0,.5,.2);
+            cur_glFunctions->glDrawElements(GL_LINES, it->second.size(),GL_UNSIGNED_INT, &(it->second[0]));
+        }
     }
 
-    if (m_drawPoints) {
-        glDisable(GL_DEPTH_TEST);
-        drawVerticies(displayMap, colorMap);
-    }
-
-    if (m_drawPolylines) {
-        drawPolylines(displayMap, colorMap);
-    }
-
-
-    //if(drawIndex.size()>=3){
-        //cur_glFunctions->glBindVertexArray(m_VAO);
-
-        //cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-        //cur_glFunctions->glBufferData(GL_ELEMENT_ARRAY_BUFFER, drawIndex.size() * sizeof(unsigned int), &drawIndex[0], GL_STATIC_DRAW);
-        //checkOpenGLError();
-        //cur_glFunctions->glDrawElements(GL_TRIANGLES,drawIndex.size(),GL_UNSIGNED_INT, 0);
-        //checkOpenGLError();
-    //}
     cur_glFunctions->glBindVertexArray(0);
     cur_glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);

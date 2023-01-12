@@ -207,11 +207,13 @@ void getGroupPolyline(Tr& t,std::vector<std::vector<C3t3::Edge>>& polyLines,std:
   }
 
   for(unsigned int i=0;i<polyLines.size();i++){
+
     if(!used[i]){
       std::vector<std::vector<C3t3::Edge>> temp;
       std::vector<int> domains;
       Tr::Cell_circulator c=t.incident_cells(polyLines[i][0]);
       Tr::Cell_circulator done=c;
+
       do{
         C3t3::Cell_handle cell=c;
         int n=(int)(cell->subdomain_index());
@@ -241,6 +243,7 @@ void getGroupPolyline(Tr& t,std::vector<std::vector<C3t3::Edge>>& polyLines,std:
               break;
             }
           }
+
           if(isSame){
             temp.push_back(polyLines[i]);
             used[j]=true;

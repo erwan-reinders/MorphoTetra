@@ -17,6 +17,26 @@ private :
     std::map<Subdomain_index, bool>     m_displayMap;
     std::map<Subdomain_index, QColor>   m_fileColors;
 
+    //Rendering programs
+    QOpenGLContext*         cur_glContext;
+    QOpenGLExtraFunctions*  cur_glFunctions;
+    GLuint                  cur_programID;
+
+    //Mesh OpenGL prog
+    QOpenGLContext*         mesh_glContext;
+    QOpenGLExtraFunctions*  mesh_glFunctions;
+    GLuint                  mesh_programID;
+
+    //Points and Polylines OpenGL prog
+    QOpenGLContext*         pointNlines_glContext;
+    QOpenGLExtraFunctions*  pointNlines_glFunctions;
+    GLuint                  pointNlines_programID;
+
+    bool m_drawWireFrame;
+    bool m_drawMesh;
+    bool m_drawPoints;
+    bool m_drawPolylines;
+
 public:
     MultiMeshViewer(QWidget *parent);
     virtual ~MultiMeshViewer();
@@ -26,6 +46,7 @@ public:
     void setVisibility(unsigned int i, bool visibility);
     void setDrawMesh(int state);
     void setDrawVertices(int state);
+    void setDrawPolylines(int state);
 
     std::map<Subdomain_index, QColor> getColorMap(){return m_colorMap;}
     const std::map<Subdomain_index, QColor> getColorMap()const {return m_colorMap;}
@@ -35,6 +56,7 @@ protected :
     virtual void draw();
 
     void clear();
+    void initMatrix(QOpenGLExtraFunctions*  cur_glFunctions);
 
     void initLigthAndMaterial();
 
@@ -42,7 +64,7 @@ protected :
     void initAllMesh();
 
     void computeRandomColors(const std::vector<int> & subdomain_indices, std::map<Subdomain_index, QColor> & cMap);
-
+    void compileRenderingPrograms();
 
 public slots :
     void test(){};
