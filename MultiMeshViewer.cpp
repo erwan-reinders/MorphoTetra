@@ -33,9 +33,19 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_drawPoints= false;
     m_drawPolylines = false;
 
+    m_cutPlaneActiveX =  false;
+    m_cutPlaneActiveY =  false;
+    m_cutPlaneActiveZ =  false;
+    m_clippingPoint =   qglviewer::Vec(0.0f, 0.0f, 0.0f);
+    m_clippingNormal =  qglviewer::Vec(0.0f, 1.0f, 0.0f);
+    m_cut =             qglviewer::Vec(250.0f, 250.0f, 250.0f);
+    m_cutDirection =    qglviewer::Vec(1.0f, 1.0f, 1.0f);
+
     m_playerTime = 0.0;
     m_playerTimeScale = 1.0;
     m_playerPaused = true;
+
+    emit setMaxCutPlanes(5000, 5000, 5000);
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(mainLoop()));
@@ -59,6 +69,35 @@ void MultiMeshViewer::initMatrix(ShaderProgram & program){
     program.glFunctions->glUniformMatrix4fv(
                 program.glFunctions->glGetUniformLocation(program.programID, "mv_matrix")
                 ,1, GL_FALSE, mvMatrix);
+
+    program.glFunctions->glUniform1i(
+                program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkX")
+                ,!m_cutPlaneActiveX);
+
+    program.glFunctions->glUniform1i(
+                program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkY")
+                ,!m_cutPlaneActiveY);
+
+    program.glFunctions->glUniform1i(
+                program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkZ")
+                ,!m_cutPlaneActiveZ);
+
+    program.glFunctions->glUniform3f(
+                program.glFunctions->glGetUniformLocation(program.programID, "clippingPoint")
+                ,m_clippingPoint[0], m_clippingPoint[1], m_clippingPoint[2]);
+
+    program.glFunctions->glUniform3f(
+                program.glFunctions->glGetUniformLocation(program.programID, "clippingNormal")
+                ,m_clippingNormal[0], m_clippingNormal[1], m_clippingNormal[2]);
+
+    program.glFunctions->glUniform3f(
+                program.glFunctions->glGetUniformLocation(program.programID, "cut")
+                ,m_cut[0], m_cut[1], m_cut[2]);
+
+    program.glFunctions->glUniform3f(
+                program.glFunctions->glGetUniformLocation(program.programID, "cutDirection")
+                ,m_cutDirection[0], m_cutDirection[1], m_cutDirection[2]);
+
 }
 
 void MultiMeshViewer::compileRenderingPrograms(){
@@ -129,7 +168,7 @@ void MultiMeshViewer::init(){
 
     initLigthAndMaterial();
 
-    //glDisable( GL_DEBUG_OUTPUT );
+    glDisable( GL_DEBUG_OUTPUT );
 }
 
 void MultiMeshViewer::draw(){
@@ -315,7 +354,14 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  
 
 
     m_curModel = 0;
-    const std::vector<Subdomain_index> & subdomain_indices = m_meshes[m_curModel].getSubdomainsIndex();
+    std::vector<Subdomain_index> subdomain_indices;
+    for (int m = 0; m < m_meshes.size(); m++) {
+        std::vector<Subdomain_index> & curent_subdomain_indices = m_meshes[m].getSubdomainsIndex();
+        for (int si = 0; si < curent_subdomain_indices.size(); si++) {
+            subdomain_indices.push_back(curent_subdomain_indices[si]);
+        }
+    }
+
     m_displayMap.clear();
     m_colorMap.clear();
     for(unsigned int i = 0 ; i < subdomain_indices.size() ; i++)
@@ -326,4 +372,49 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  
     //initAllMesh();
     initCurrentDisplayedMesh();
     emit setMeshSubdomains();
+}
+
+void MultiMeshViewer::setXCut(int val) {
+    m_cut[0] = float(val);
+    update();
+}
+
+void MultiMeshViewer::setYCut(int val) {
+    m_cut[1] = float(val);
+    update();
+}
+
+void MultiMeshViewer::setZCut(int val) {
+    m_cut[2] = float(val);
+    update();
+}
+
+void MultiMeshViewer::invertXCut() {
+    m_cutDirection[0] = -m_cutDirection[0];
+    update();
+}
+
+void MultiMeshViewer::invertYCut() {
+    m_cutDirection[1] = -m_cutDirection[1];
+    update();
+}
+
+void MultiMeshViewer::invertZCut() {
+    m_cutDirection[2] = -m_cutDirection[2];
+    update();
+}
+
+void MultiMeshViewer::setXCutDisplay(bool state) {
+    m_cutPlaneActiveX = state;
+    update();
+}
+
+void MultiMeshViewer::setYCutDisplay(bool state) {
+    m_cutPlaneActiveY = state;
+    update();
+}
+
+void MultiMeshViewer::setZCutDisplay(bool state) {
+    m_cutPlaneActiveZ = state;
+    update();
 }

@@ -45,7 +45,7 @@ void PlayerDocWidget::updateSliderValues() {
 
 void PlayerDocWidget::initPlayerSlider(QHBoxLayout* layout) {
     m_min = 0;
-    m_max = 5;
+    m_max = 256;
     m_step = 1;
     m_currentValue = 0;
     m_playState = false;

@@ -12,6 +12,58 @@ MorphoTetraDocWidget::MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * 
 MorphoTetraDocWidget::~MorphoTetraDocWidget(){}
 
 void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
+
+    QGroupBox * groupBox = new QGroupBox("Cutting plane", this);
+    groupBox->setMaximumSize(QSize(16777215, 200));
+
+    contentLayout->addWidget ( groupBox) ;
+
+    QGridLayout * cuttingPlaneGridLayout = new QGridLayout(groupBox);
+    xHSlider = new QSlider(groupBox);
+    xHSlider->setOrientation(Qt::Horizontal);
+
+    cuttingPlaneGridLayout->addWidget(xHSlider, 1, 0, 1, 1);
+
+    yHSlider = new QSlider(groupBox);
+    yHSlider->setOrientation(Qt::Horizontal);
+
+    cuttingPlaneGridLayout->addWidget(yHSlider, 3, 0, 1, 1);
+
+    zHSlider = new QSlider(groupBox);
+    zHSlider->setOrientation(Qt::Horizontal);
+
+    cuttingPlaneGridLayout->addWidget(zHSlider, 5, 0, 1, 1);
+
+    QPushButton * invertXPushButton = new QPushButton("invert", groupBox);
+    cuttingPlaneGridLayout->addWidget(invertXPushButton, 1, 1, 1, 1);
+
+    QPushButton * invertYPushButton = new QPushButton("invert", groupBox);
+    cuttingPlaneGridLayout->addWidget(invertYPushButton, 3, 1, 1, 1);
+
+    QPushButton * invertZPushButton = new QPushButton("invert", groupBox);
+    cuttingPlaneGridLayout->addWidget(invertZPushButton, 5, 1, 1, 1);
+
+    QLabel * labelCutX = new QLabel("x cut position", groupBox);
+    cuttingPlaneGridLayout->addWidget(labelCutX, 0, 0, 1, 1);
+
+    QLabel * labelCutY = new QLabel("y cut position", groupBox);
+    cuttingPlaneGridLayout->addWidget(labelCutY, 2, 0, 1, 1);
+
+    QLabel * labelCutZ = new QLabel("z cut position", groupBox);
+    cuttingPlaneGridLayout->addWidget(labelCutZ, 4, 0, 1, 1);
+
+    QCheckBox * displayXCut = new QCheckBox("display", groupBox);
+    cuttingPlaneGridLayout->addWidget(displayXCut, 0, 1, 1, 1);
+
+    QCheckBox * displayYCut = new QCheckBox("display", groupBox);
+    cuttingPlaneGridLayout->addWidget(displayYCut, 2, 1, 1, 1);
+
+    QCheckBox * displayZCut = new QCheckBox("display", groupBox);
+    cuttingPlaneGridLayout->addWidget(displayZCut, 4, 1, 1, 1);
+
+
+
+
     m_displaySubdomainsBox = new QGroupBox("Label display", this);
 
     QVBoxLayout * segIVLayout = new QVBoxLayout(m_displaySubdomainsBox);
@@ -66,6 +118,7 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
 
 
 
+
     segIVLayout->addLayout(segIGridKayout);
 
     segIVLayout->addStretch(0);
@@ -77,6 +130,21 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     connect(polylineDrawModeGroup, SIGNAL(clicked(bool)), this, SLOT(setDrawPolylines(bool)));
     connect(linearModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeLinear(bool)));
     connect(CRModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeSmooth(bool)));
+
+
+    connect(m_viewer,SIGNAL(setMaxCutPlanes(int,int,int)), this, SLOT(setMaxCutPlanes(int,int,int)));
+    connect(xHSlider,SIGNAL(valueChanged(int)), m_viewer, SLOT(setXCut(int)));
+    connect(yHSlider,SIGNAL(valueChanged(int)), m_viewer, SLOT(setYCut(int)));
+    connect(zHSlider,SIGNAL(valueChanged(int)), m_viewer, SLOT(setZCut(int)));
+
+    connect(invertXPushButton,SIGNAL(clicked()), m_viewer, SLOT(invertXCut()));
+    connect(invertYPushButton,SIGNAL(clicked()), m_viewer, SLOT(invertYCut()));
+    connect(invertZPushButton,SIGNAL(clicked()), m_viewer, SLOT(invertZCut()));
+
+    connect(displayXCut,SIGNAL(toggled(bool)), m_viewer, SLOT(setXCutDisplay(bool)));
+    connect(displayYCut,SIGNAL(toggled(bool)), m_viewer, SLOT(setYCutDisplay(bool)));
+    connect(displayZCut,SIGNAL(toggled(bool)), m_viewer, SLOT(setZCutDisplay(bool)));
+
 
     connect(m_viewer, SIGNAL(setMeshSubdomains()), this, SLOT(setMeshSubDomains()));
     contentLayout->addWidget(m_displaySubdomainsBox);
@@ -183,4 +251,10 @@ void MorphoTetraDocWidget::setPolylineModeSmooth(bool state) {
     if (state) {
         m_viewer->setPolylineDrawMode(1);
     }
+}
+
+void MorphoTetraDocWidget::setMaxCutPlanes( int x, int y , int z ){
+    xHSlider->setRange(0,x);
+    yHSlider->setRange(0,y);
+    zHSlider->setRange(0,z);
 }

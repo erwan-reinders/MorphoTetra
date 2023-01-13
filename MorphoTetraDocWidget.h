@@ -12,6 +12,7 @@
 #include <QPushButton>
 #include <QBoxLayout>
 #include <QRadioButton>
+#include <QSlider>
 
 #include "MultiMeshViewer.h"
 
@@ -28,6 +29,10 @@ private :
     QVector<QCheckBox *>        m_labelICheckButtons;
     std::vector<unsigned int>   m_indexIToLabel;
     QVector<QLabel *>           m_imageLabels;
+
+    QSlider * xHSlider;
+    QSlider * yHSlider;
+    QSlider * zHSlider;
 
 protected :
     void setSubdomainsElement(QVBoxLayout * contentLayout);
@@ -48,6 +53,8 @@ public slots :
     void setDrawPolylines(bool state);
     void setPolylineModeLinear(bool state);
     void setPolylineModeSmooth(bool state);
+
+    void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
 };
 
 #endif // MORPHOTETRADOCWIDGET_H

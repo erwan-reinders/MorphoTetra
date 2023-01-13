@@ -54,6 +54,14 @@ public:
     std::map<Subdomain_index, QColor> getColorMap(){return m_colorMap;}
     const std::map<Subdomain_index, QColor> getColorMap()const {return m_colorMap;}
 
+    bool m_cutPlaneActiveX;
+    bool m_cutPlaneActiveY;
+    bool m_cutPlaneActiveZ;
+    qglviewer::Vec m_clippingPoint;
+    qglviewer::Vec m_clippingNormal;
+    qglviewer::Vec m_cut;
+    qglviewer::Vec m_cutDirection;
+
 protected :
     virtual void init();
     virtual void draw();
@@ -74,6 +82,18 @@ public slots :
     void onPlayerPaused();
     void onPlayerPlayed();
     void onPlayerValueChanged(double doubleValue);
+
+    void setXCut(int val);
+    void setYCut(int val);
+    void setZCut(int val);
+
+    void invertXCut();
+    void invertYCut();
+    void invertZCut();
+
+    void setXCutDisplay(bool state);
+    void setYCutDisplay(bool state);
+    void setZCutDisplay(bool state);
 signals:
    void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
    void setMeshSubdomains();

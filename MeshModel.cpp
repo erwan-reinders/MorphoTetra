@@ -662,7 +662,6 @@ void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_ind
             renderingProgram.glFunctions->glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
 
             renderingProgram.glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
-            std::cout << it->second.size() << std::endl;
 
             renderingProgram.glFunctions->glDrawElements(GL_TRIANGLES,it->second.size() * 3,GL_UNSIGNED_INT, &drawIndex[0]);
 
