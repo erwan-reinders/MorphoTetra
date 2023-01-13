@@ -45,8 +45,6 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_playerTimeScale = 1.0;
     m_playerPaused = true;
 
-    emit setMaxCutPlanes(20000, 20000, 20000);
-
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(mainLoop()));
     timer->start(m_wantedDeltaTime);
@@ -372,6 +370,10 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  
     //initAllMesh();
     initCurrentDisplayedMesh();
     emit setMeshSubdomains();
+
+
+
+    emit setMaxCutPlanes(1000, 1000, 1000);
 }
 
 void MultiMeshViewer::setXCut(int val) {
