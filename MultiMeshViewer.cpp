@@ -38,14 +38,14 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_cutPlaneActiveZ =  false;
     m_clippingPoint =   qglviewer::Vec(0.0f, 0.0f, 0.0f);
     m_clippingNormal =  qglviewer::Vec(0.0f, 1.0f, 0.0f);
-    m_cut =             qglviewer::Vec(250.0f, 250.0f, 250.0f);
+    m_cut =             qglviewer::Vec(0.0f, 0.0f, 0.0f);
     m_cutDirection =    qglviewer::Vec(1.0f, 1.0f, 1.0f);
 
     m_playerTime = 0.0;
     m_playerTimeScale = 1.0;
     m_playerPaused = true;
 
-    emit setMaxCutPlanes(5000, 5000, 5000);
+    emit setMaxCutPlanes(20000, 20000, 20000);
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(mainLoop()));
@@ -72,15 +72,15 @@ void MultiMeshViewer::initMatrix(ShaderProgram & program){
 
     program.glFunctions->glUniform1i(
                 program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkX")
-                ,!m_cutPlaneActiveX);
+                ,m_cutPlaneActiveX);
 
     program.glFunctions->glUniform1i(
                 program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkY")
-                ,!m_cutPlaneActiveY);
+                ,m_cutPlaneActiveY);
 
     program.glFunctions->glUniform1i(
                 program.glFunctions->glGetUniformLocation(program.programID, "visibility_checkZ")
-                ,!m_cutPlaneActiveZ);
+                ,m_cutPlaneActiveZ);
 
     program.glFunctions->glUniform3f(
                 program.glFunctions->glGetUniformLocation(program.programID, "clippingPoint")
