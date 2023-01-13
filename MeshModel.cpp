@@ -27,6 +27,7 @@ void MeshModel::initDrawingBuffers(ShaderProgram& renderingProgram){
 
     renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO_smooth_Catmull);
     renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer_smooth_Catmull);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_dimensionsBuffer_smooth_Catmull);
 }
 
 void MeshModel::initGLSL_vertices(QOpenGLExtraFunctions*  cur_glFunctions){
@@ -119,6 +120,16 @@ void MeshModel::initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions
     drawVertices.clear();
 }
 
+void MeshModel::initGLSL_CatmullDimensions(QOpenGLExtraFunctions*  cur_glFunctions){
+    if(DEBUGAPP) std::cout << "[Model] init GLSL dimensions CATMULL : " << m_verticesSmoothPolylinesDimensions.size() << std::endl;
+
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_dimensionsBuffer_smooth_Catmull);
+    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, m_verticesSmoothPolylinesDimensions.size() * sizeof(int), &m_verticesSmoothPolylinesDimensions[0], GL_STATIC_DRAW);
+    cur_glFunctions->glVertexAttribIPointer(m_dimensionsBufferPos, 1, GL_INT, 1.0 * sizeof(int), (void*)0);
+    cur_glFunctions->glEnableVertexAttribArray(m_dimensionsBufferPos);
+    checkOpenGLError();
+}
+
 void MeshModel::initGLSL_Default(ShaderProgram& renderingProgram){
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL Default" << std::endl;
@@ -142,6 +153,7 @@ void MeshModel::initGLSL_Catmull(ShaderProgram& renderingProgram){
 
     renderingProgram.glFunctions->glBindVertexArray(m_VAO_smooth_Catmull);
     initGLSL_CatmullVertices(renderingProgram.glFunctions);
+    initGLSL_CatmullDimensions(renderingProgram.glFunctions);
 
     renderingProgram.glFunctions->glBindVertexArray(0);
     renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -172,7 +184,6 @@ void MeshModel::initGLSL(ShaderProgram& renderingProgram){
         std::cout << "vertices buf Catmull : " << m_verticesBuffer_smooth_Catmull << std::endl;
     }
 }
-
 
 
 
@@ -328,6 +339,7 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     // Creation de nouvelle polyline smooth avec plus de points
     m_verticesSmoothPolylines.clear();
     m_sortedSmoothPolylines.clear();
+    m_verticesSmoothPolylinesDimensions.clear();
 
     std::vector<std::vector<bool>> reversed;
     for (unsigned int i = 0; i < m_polyLines.size(); ++i) {
@@ -377,6 +389,7 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
             p1 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].second)->point());
             p2 = pointToVec(cur_egrp[0].first->vertex(cur_egrp[0].third)->point());
         }
+
         p0 = p1 + (p1-p2);
         for(unsigned int j = 0; j< cur_egrp.size(); j++) {
             C3t3::Edge cur_edge = cur_egrp[j];
@@ -419,9 +432,23 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
             }while(c != done);
 
             // 3. Add points and domains
-
+            int min_s = tmpPoints.size()/2;
             for (unsigned int k = 0; k < tmpPoints.size(); k++) {
-                std::cout << "SORTIE CATMULROM : " << tmpPoints[k][0] << ", "<<tmpPoints[k][1] <<", "<< tmpPoints[k][2] << std::endl;
+
+                if(min_s > k){
+                    if(reversed[i][j]){
+                        m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.third)));
+                    }else{
+                        m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.second)));
+                    }
+                }else{
+                    if(reversed[i][j]){
+                        m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.second)));
+                    }else{
+                        m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.third)));
+                    }
+                }
+
                 m_verticesSmoothPolylines.push_back(tmpPoints[k]);
 
                 if (m_verticesSmoothPolylines.size() > 1 && samePolyline) {
@@ -441,6 +468,13 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
 
             // 5. Edge case
             if (j == cur_egrp.size()-1) {
+
+                if(reversed[i][j]){
+                    m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.third)));
+                }else{
+                    m_verticesSmoothPolylinesDimensions.push_back(m_c3t3.in_dimension(cur_edge.first->vertex(cur_edge.second)));
+                }
+
                 m_verticesSmoothPolylines.push_back(p2);
 
                 if (m_verticesSmoothPolylines.size() > 1 && samePolyline) {
@@ -583,18 +617,10 @@ void MeshModel::drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomai
             Subdomain_index si = it->first;
 
             if(displayMap[si]){
-                //renderingProgram.glFunctions->glUniform1i(renderingProgram.glFunctions->glGetUniformLocation(renderingProgram.programID, "u_dimension"), 1);
                 renderingProgram.glFunctions->glDrawElements(GL_LINES, it->second.size(),GL_UNSIGNED_INT, &(it->second[0]));
             }
         }
     }else{
-//        std::vector<float>  drawVertices;
-//        for(unsigned int i = 0; i<m_verticesSmoothPolylines.size(); i++){
-//            drawVertices.push_back(m_verticesSmoothPolylines[i][0]);
-//            drawVertices.push_back(m_verticesSmoothPolylines[i][1]);
-//            drawVertices.push_back(m_verticesSmoothPolylines[i][2]);
-//        }
-
         if(polylineDrawMode == 1){
             renderingProgram.glFunctions->glBindVertexArray(m_VAO_smooth_Catmull);
             glLineWidth(3.0f);
@@ -606,9 +632,6 @@ void MeshModel::drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomai
                 }
             }
         }
-
-
-        renderingProgram.glFunctions->glDrawArrays(GL_POINTS,0, 3.0f*m_verticesSmoothPolylines.size());
     }
 
     renderingProgram.glFunctions->glBindVertexArray(0);

@@ -33,6 +33,7 @@ private :
     std::vector <Triangle>          m_triangles;
     std::vector <Tetrahedron>       m_tetrahedra;
 
+    std::vector<int> m_verticesSmoothPolylinesDimensions;
     std::vector<int> m_verticesDimensions;
 
     std::vector<Subdomain_index> m_vertices_subdomain_ids;
@@ -53,7 +54,7 @@ private :
     GLuint m_VAO, m_verticesBuffer, m_dimensionsBuffer, m_normalsBuffer, m_indexBuffer;
     GLuint m_verticesBufferPos, m_colorsBufferPos, m_normalsBufferPos,m_dimensionsBufferPos;
 
-    GLuint m_VAO_smooth_Catmull, m_verticesBuffer_smooth_Catmull;
+    GLuint m_VAO_smooth_Catmull, m_verticesBuffer_smooth_Catmull, m_dimensionsBuffer_smooth_Catmull;
 
     float m_smoothPolylineSubdivisionNumber;
 
@@ -67,6 +68,7 @@ protected :
     void initGLSL_normals(QOpenGLExtraFunctions*  cur_glFunctions);
 
     void initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions);
+    void initGLSL_CatmullDimensions(QOpenGLExtraFunctions*  cur_glFunctions);
 
     void initGLSL_Default(ShaderProgram& renderingProgram);
     void initGLSL_Catmull(ShaderProgram& renderingProgram);

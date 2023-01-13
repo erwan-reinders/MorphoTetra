@@ -28,6 +28,12 @@ private :
     bool m_drawPoints;
     bool m_drawPolylines;
     int  m_polylineDrawMode;
+
+    const int m_wantedDeltaTime = 33;
+
+    double m_playerTime;
+    double m_playerTimeScale;
+    bool m_playerPaused;
 public:
     MultiMeshViewer(QWidget *parent);
     virtual ~MultiMeshViewer();
@@ -60,9 +66,15 @@ protected :
 
 public slots :
     void test(){};
+    void mainLoop();
+    void onPlayerPaused();
+    void onPlayerPlayed();
+    void onPlayerValueChanged(double doubleValue);
 signals:
    void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
    void setMeshSubdomains();
+   void updatePlayerTime(double _playerTime);
+   void pausePlayer();
 };
 
 #endif // MULTIMESHVIEWER_H

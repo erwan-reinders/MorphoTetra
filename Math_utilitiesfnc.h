@@ -5,11 +5,11 @@
 #include "CGAL/cgal_headers.h"
 
 inline void Catmull_Rom(std::vector<qglviewer::Vec> & outPoints, qglviewer::Vec p0,  qglviewer::Vec p1, qglviewer::Vec p2, qglviewer::Vec p3, float subdivisionNumber) {
-    std::cout << "Catmull_Rom ON : " << std::endl;
-    std::cout << p0[0] << "," << p0[1] << ","<< p0[2]<< std::endl;
-    std::cout << p1[0] << "," << p1[1] << ","<< p1[2]<< std::endl;
-    std::cout << p2[0] << "," << p2[1] << ","<< p2[2]<< std::endl;
-    std::cout << p3[0] << "," << p3[1] << ","<< p3[2]<< std::endl;
+    //std::cout << "Catmull_Rom ON : " << std::endl;
+    //std::cout << p0[0] << "," << p0[1] << ","<< p0[2]<< std::endl;
+    //std::cout << p1[0] << "," << p1[1] << ","<< p1[2]<< std::endl;
+    //std::cout << p2[0] << "," << p2[1] << ","<< p2[2]<< std::endl;
+    //std::cout << p3[0] << "," << p3[1] << ","<< p3[2]<< std::endl;
 
 
     outPoints.reserve(subdivisionNumber);

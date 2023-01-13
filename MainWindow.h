@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "MorphoTetraDocWidget.h"
+#include "PlayerDocWidget.h"
 #include <QGroupBox>
 #include <QGridLayout>
 
@@ -15,6 +16,7 @@ private :
 
     MultiMeshViewer *           m_viewer;
     MorphoTetraDocWidget *      m_OptionDocWidget;
+    PlayerDocWidget *           m_PlayerDocWidget;
 
     QDockWidget *               mesherDockWidget;
 

@@ -5,6 +5,7 @@
 
 MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_meshes.push_back(MeshModel("data/out.mesh"));
+    //m_meshes.push_back(MeshModel("data/patric/140317-Patrick-St8_fuse_seg_post_reg_t001.inr"));
 
     m_curModel = 0;
     const std::vector<Subdomain_index> & subdomain_indices = m_meshes[m_curModel].getSubdomainsIndex();
@@ -25,6 +26,14 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     m_drawMesh= true;
     m_drawPoints= false;
     m_drawPolylines = false;
+
+    m_playerTime = 0.0;
+    m_playerTimeScale = 1.0;
+    m_playerPaused = true;
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(mainLoop()));
+    timer->start(m_wantedDeltaTime);
     //help();
 }
 
@@ -159,6 +168,37 @@ void MultiMeshViewer::draw(){
 
 void MultiMeshViewer::clear(){
     m_meshes.clear();
+}
+
+void MultiMeshViewer::mainLoop() {
+    //Todo compute real deltaTime
+    if (!m_playerPaused) {
+        m_playerTime += ((double) m_wantedDeltaTime / 1000.0) * m_playerTimeScale;
+
+        if (m_playerTime > 1.0) {
+            m_playerTime = 1.0;
+            m_playerPaused = true;
+            emit pausePlayer();
+        }
+
+        emit updatePlayerTime(m_playerTime);
+    }
+}
+
+
+void MultiMeshViewer::onPlayerPaused() {
+    m_playerPaused = true;
+}
+
+void MultiMeshViewer::onPlayerPlayed() {
+    m_playerPaused = false;
+    if (m_playerTime >= 1.0) {
+        m_playerTime = 0.0;
+    }
+}
+
+void MultiMeshViewer::onPlayerValueChanged(double doubleValue) {
+    m_playerTime = doubleValue;
 }
 
 void MultiMeshViewer::initLigthAndMaterial(){
