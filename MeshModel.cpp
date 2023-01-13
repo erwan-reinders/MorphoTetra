@@ -1,25 +1,111 @@
 #include "MeshModel.h"
 #include "QGLViewer/manipulatedFrame.h"
 
+#include <CGAL/Labeled_mesh_domain_3.h>
+
+
 #include "CGAL/cgal_basicfunctions.h"
+
+MeshModel::MeshModel(){
+
+}
 
 MeshModel::MeshModel(const char* filename){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
-
     m_smoothPolylineSubdivisionNumber = 8.0f;
-    initCGAL(filename);
-
     m_verticesBufferPos     = 0;
     m_dimensionsBufferPos   = 2;
     m_normalsBufferPos      = 1;
 
-    recomputeNormals();
+    m_glslInitialised = false;
+
+    initFromMeshFile(filename);
 }
 
 MeshModel::~MeshModel(){}
 
+bool MeshModel::initialized() {
+    return m_glslInitialised;
+}
+
+void MeshModel::initFromMeshFile(const char* filename){
+    initCGAL(filename);
+    recomputeNormals();
+}
+
+void MeshModel::initFromInrFile(const char* filename) {
+    if(DEBUGAPP) std::cout << "[Model] init" << std::endl;
+
+    m_smoothPolylineSubdivisionNumber = 8.0f;    
+    m_verticesBufferPos     = 0;
+    m_dimensionsBufferPos   = 2;
+    m_normalsBufferPos      = 1;
+
+    m_glslInitialised = false;
+
+    if(DEBUGAPP) std::cout << "[Model] init CGAL Inr (" << filename << ")" << std::endl;
+
+    C3t3 m_c3t3;
+    CGAL::Image_3 image;
+    image.read(filename);
+    std::cout << "img read" << std::endl;
+
+    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image, 1e-9);        // Domain
+    //Mesh_domain domain = Mesh_domain::create_labeled_image_mesh_domain(image);
+
+    std::cout << "domain" << std::endl;
+
+    // Mesh criteria
+    Mesh_criteria::Edge_criteria edge_criteria(6);
+    Mesh_criteria::Facet_criteria facet_criteria(30, 10, 1); // angle, size, approximation
+    Mesh_criteria::Cell_criteria cell_criteria(0, 0);        // radius-edge ratio, size
+    Mesh_criteria criteria(facet_criteria, cell_criteria);
+
+    std::cout << "criteria" << std::endl;
+
+    // Meshing
+    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, CGAL::parameters::no_exude(), CGAL::parameters::no_perturb());
+
+    std::cout << "BB" << std::endl;
+    CGAL::Bbox_3 bbox = m_c3t3.bbox();
+    m_center = qglviewer::Vec ((bbox.xmax() - bbox.xmin())/2., (bbox.ymax() - bbox.ymin())/2., (bbox.zmax() - bbox.zmin())/2.);
+    m_radius = std::max(std::max(bbox.xmax() - bbox.xmin(), bbox.ymax() - bbox.ymin()), bbox.zmax() - bbox.zmin())*2.;
+
+    //testCGAL(m_c3t3);
+    Tr & m_t = m_c3t3.triangulation();
+
+    std::cout << "COMPUTE CARAC EDGES ! " << std::endl;
+    std::vector<C3t3::Edge> caracEdge;
+    computeCaracteristicEdges(m_c3t3, caracEdge);
+
+    std::cout << "GET POLYLINE ! " << std::endl;
+    getPolyline(m_polyLines, m_c3t3, caracEdge);
+
+    std::cout << "GET GROUP POLYLINE ! " << std::endl;
+    getGroupPolyline(m_t, m_polyLines, m_groupPolyLines);
+
+    //std::map<Vertex_handle, int> VMap;
+    //getVerticesAndMap(m_c3t3 ,m_t, m_vertices, m_verticesDimensions, VMap);
+    //std::map<Cell_handle, int> CMap;
+    //getTriangulationAndCgalEnvelop(m_c3t3,m_t,VMap, m_triangles, m_triangles_subdomain_ids, m_CGAL_envelop, m_surface_indices);
+    //getTetrahedronAndMap(m_c3t3,m_t, VMap,m_tetrahedra,m_tetrahedra_subdomain_ids, CMap);
+    //sortTriangleAndTetraBySubdomainIndex(m_triangles,m_triangles_subdomain_ids ,m_tetrahedra,m_tetrahedra_subdomain_ids, m_sortedTriangles, m_sortedTetrahedra, m_subdomain_indices);
+
+    CGALGeometry(m_c3t3);
+
+    if(DEBUGAPP){
+        std::cout << "[Model] init CGAL END" << std::endl;
+        std::cout << "vertices size : " << m_vertices.size() << std::endl;
+        std::cout << "triangles size : " << m_triangles.size() << std::endl;
+        std::cout << "tetrahedra size : " << m_tetrahedra.size() << std::endl;
+        std::cout << "polylines size : " << m_polyLines.size() << std::endl;
+        std::cout << "group polylines size : " << m_groupPolyLines.size() << std::endl;
+    }
+    recomputeNormals();
+}
+
 void MeshModel::initDrawingBuffers(ShaderProgram& renderingProgram){
-    renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO);
+    renderingProgram.glFunctions->glGenVertexArrays(1, &m_VAO);
     renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer);
     renderingProgram.glFunctions->glGenBuffers(1, &m_normalsBuffer);
     renderingProgram.glFunctions->glGenBuffers(1, &m_dimensionsBuffer);
@@ -173,6 +259,8 @@ void MeshModel::initGLSL(ShaderProgram& renderingProgram){
 
     initGLSL_Default(renderingProgram);
     initGLSL_Catmull(renderingProgram);
+
+    m_glslInitialised = true;
 
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL END" << std::endl;
@@ -531,8 +619,8 @@ void MeshModel::initCGAL(const char* filename){
 
 
 
-
 void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
+
     renderingProgram.glFunctions->glBindVertexArray(m_VAO);
 
     std::map<Subdomain_index, QColor>::const_iterator itCol;
@@ -570,11 +658,13 @@ void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_ind
                         ,color.redF(),color.greenF(),color.blueF());
 
             renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_normalsBuffer);
+
             renderingProgram.glFunctions->glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
+
             renderingProgram.glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
+            std::cout << it->second.size() << std::endl;
 
             renderingProgram.glFunctions->glDrawElements(GL_TRIANGLES,it->second.size() * 3,GL_UNSIGNED_INT, &drawIndex[0]);
-
 
             drawIndex.clear();
             delete[] drawNormals;
@@ -585,7 +675,7 @@ void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_ind
     }
 
     renderingProgram.glFunctions->glBindVertexArray(0);
-    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -604,7 +694,7 @@ void MeshModel::drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomai
     }
 
     renderingProgram.glFunctions->glBindVertexArray(0);
-    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -635,7 +725,7 @@ void MeshModel::drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomai
     }
 
     renderingProgram.glFunctions->glBindVertexArray(0);
-    renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -656,7 +746,6 @@ void MeshModel::computeFacetsNormals(){
     for(unsigned int i = 0 ; i < m_triangles.size() ; i++){
         qglviewer::Vec normal;
         computeFacetNormal(i, normal);
-        //if(DEBUGAPP) std::cout << normal[0] << "," << normal[1] << "," << normal[2] << std::endl;
         m_trianglesNormals.push_back(normal);
     }
 
@@ -667,6 +756,7 @@ void MeshModel::computeFacetNormal( int id , qglviewer::Vec& normal){
     //std::cout << "triangle : " << t.getVertex(0) << ","  << t.getVertex(1) << "," << t.getVertex(2) << std::endl;
     normal = cross(m_vertices[t.getVertex(1)] - m_vertices[t.getVertex(0)], m_vertices[t.getVertex(2)]- m_vertices[t.getVertex(0)]);
     //if(DEBUGAPP) std::cout << "normal : " << normal[0] << "," << normal[1] << "," << normal[2] << std::endl;
+
     normal.normalize();
 }
 
@@ -717,4 +807,5 @@ void MeshModel::computeVerticesNormals(unsigned int normWeight){
             it->second.normalize();
         }
     }
+    if(DEBUGAPP) std::cout << "[Model] compute vertices normal end" << std::endl;
 }

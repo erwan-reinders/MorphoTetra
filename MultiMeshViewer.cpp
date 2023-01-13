@@ -4,8 +4,12 @@
 #include <utility>
 
 MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
-    m_meshes.push_back(MeshModel("data/out.mesh"));
-    //m_meshes.push_back(MeshModel("data/patric/140317-Patrick-St8_fuse_seg_post_reg_t001.inr"));
+    //m_meshes.push_back(MeshModel("data/out.mesh"));
+
+    //m_meshes.push_back(MeshModel());
+    //m_meshes[m_meshes.size()-1].initFromInrFile("data/patric/140317-Patrick-St8_fuse_seg_post_reg_t001.inr");
+    //m_meshes.clear();
+    /*
 
     m_curModel = 0;
     const std::vector<Subdomain_index> & subdomain_indices = m_meshes[m_curModel].getSubdomainsIndex();
@@ -20,7 +24,9 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
         for(std::map<Subdomain_index, QColor>::iterator it = m_colorMap.begin() ; it != m_colorMap.end(); ++it ){
             std::cout << "COLOR FOR  : " << it->first << " is = ( " << it->second.redF() << "," << it->second.greenF() << "," << it->second.blueF() << ")" << std::endl;
         }
-    }
+    }*/
+
+    loadedData = false;
 
     m_drawWireFrame= false;
     m_drawMesh= true;
@@ -116,27 +122,30 @@ void MultiMeshViewer::setPolylineDrawMode(int mode) {
     update();
 }
 
-
 void MultiMeshViewer::init(){
     restoreStateFromFile();
     setManipulatedFrame(new qglviewer::ManipulatedFrame());
-
     compileRenderingPrograms();
-    initAllMesh();
 
     initLigthAndMaterial();
-    initCurrentDisplayedMesh();
 
-    glDisable( GL_DEBUG_OUTPUT );
-
-    emit setMeshSubdomains();
+    //glDisable( GL_DEBUG_OUTPUT );
 }
 
 void MultiMeshViewer::draw(){
-    //glClearColor(1.0,.5,.6,1.0);
-    //glClear(GL_COLOR_BUFFER_BIT);
-    //qglviewer::Vec cam = camera()->worldCoordinatesOf( qglviewer::Vec(0.,0.,0.) );
-    //QColor defaultTMColor (0.7*255, 255, 0.32*255);
+    if (m_curModel >= m_meshes.size()) {
+        return;
+    }
+    if (!m_meshes[m_curModel].initialized()) {
+        m_meshes[m_curModel].initDrawingBuffers(mesh_glProgram);
+
+        mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
+        m_meshes[m_curModel].initGLSL(mesh_glProgram);
+
+        pointNlines_glProgram.glFunctions->glUseProgram(pointNlines_glProgram.programID);
+        m_meshes[m_curModel].initGLSL(pointNlines_glProgram);
+        pointNlines_glProgram.glFunctions->glUseProgram(0);
+    }
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -164,6 +173,8 @@ void MultiMeshViewer::draw(){
         glDisable(GL_DEPTH_TEST);
         m_meshes[m_curModel].drawVerticies(pointNlines_glProgram,m_displayMap);
     }
+
+    mesh_glProgram.glFunctions->glUseProgram(0);
 }
 
 void MultiMeshViewer::clear(){
@@ -171,8 +182,8 @@ void MultiMeshViewer::clear(){
 }
 
 void MultiMeshViewer::mainLoop() {
-    //Todo compute real deltaTime
     if (!m_playerPaused) {
+        //Todo compute real deltaTime
         m_playerTime += ((double) m_wantedDeltaTime / 1000.0) * m_playerTimeScale;
 
         if (m_playerTime > 1.0) {
@@ -182,6 +193,15 @@ void MultiMeshViewer::mainLoop() {
         }
 
         emit updatePlayerTime(m_playerTime);
+    }
+
+    int meshId = (int) (m_playerTime * m_meshes.size());
+    if (meshId >= m_meshes.size()) {
+        meshId = m_meshes.size()-1;
+    }
+    if (m_curModel != meshId) {
+        m_curModel = meshId;
+        update();
     }
 }
 
@@ -201,9 +221,7 @@ void MultiMeshViewer::onPlayerValueChanged(double doubleValue) {
     m_playerTime = doubleValue;
 }
 
-void MultiMeshViewer::initLigthAndMaterial(){
-
-}
+void MultiMeshViewer::initLigthAndMaterial(){}
 
 void MultiMeshViewer::initCurrentDisplayedMesh(){
     std::cout << "[MULTI MESH VIEWER] init current displayed mesh" << std::endl;
@@ -269,3 +287,43 @@ void MultiMeshViewer::computeRandomColors(const std::vector<int> & subdomain_ind
     }
 }
 
+
+void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  QDir& directorySelected){
+    std::cout << " ============ LOAD MESH" <<std::endl;
+
+    m_meshes.clear();
+    QString filename;
+    foreach (filename, filenames) {
+        QString file = directorySelected.absoluteFilePath(filename);
+
+        statusbar->showMessage("Opening tetra mesh : " + file);
+
+
+        std::string filenamestr = file.toStdString();
+
+        if(filename.endsWith(".mesh")){
+            m_meshes.push_back(MeshModel(filenamestr.c_str()));
+        }else{
+            if(filename.endsWith(".inr")){
+                std::cout << filename.toStdString() << std::endl;
+                m_meshes.push_back(MeshModel());
+                m_meshes[m_meshes.size()-1].initFromInrFile(filenamestr.c_str());
+            }
+            statusbar->showMessage("Tetra mesh opened !");
+        }
+    }
+
+
+    m_curModel = 0;
+    const std::vector<Subdomain_index> & subdomain_indices = m_meshes[m_curModel].getSubdomainsIndex();
+    m_displayMap.clear();
+    m_colorMap.clear();
+    for(unsigned int i = 0 ; i < subdomain_indices.size() ; i++)
+        m_displayMap[subdomain_indices[i]] = true;
+
+    computeRandomColors(subdomain_indices, m_colorMap);
+
+    //initAllMesh();
+    initCurrentDisplayedMesh();
+    emit setMeshSubdomains();
+}

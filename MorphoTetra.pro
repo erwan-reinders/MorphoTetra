@@ -64,6 +64,7 @@ INCLUDEPATH += $${VCPKG_CGAL_P}\bin
 
 LIBS += -L$${VCPKG_CGAL_P}\lib -lgmp
 LIBS += -L$${VCPKG_CGAL_P}\lib -lgmpxx
+LIBS += -L$${VCPKG_CGAL_P}\lib -lmpfr
 
 
 LIB_DIR = $${QGLViewer_P}\QGLViewer

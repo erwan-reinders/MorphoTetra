@@ -58,6 +58,8 @@ private :
 
     float m_smoothPolylineSubdivisionNumber;
 
+    bool m_glslInitialised;
+
 protected :
     void computeFacetsNormals();
     void computeFacetNormal(int t, qglviewer::Vec& normal);
@@ -79,8 +81,12 @@ public:
     qglviewer::Vec  m_center;
     float           m_radius;
 
+    MeshModel();
     MeshModel(const char* filename);
     virtual ~MeshModel();
+
+    void initFromInrFile(const char* filename);
+    void initFromMeshFile(const char* filename);
 
     void initDrawingBuffers(ShaderProgram& renderingProgram);
     void initGLSL(ShaderProgram& renderingProgram);
@@ -112,6 +118,8 @@ public:
 
     std::vector <Tetrahedron> & getTetrahedra(){return m_tetrahedra;}
     const std::vector <Tetrahedron> & getTetrahedra() const {return m_tetrahedra;}
+
+    bool initialized();
 };
 
 #endif // MESHMODEL_H

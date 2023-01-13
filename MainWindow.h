@@ -6,6 +6,10 @@
 #include "PlayerDocWidget.h"
 #include <QGroupBox>
 #include <QGridLayout>
+#include <QMenu>
+#include <QFileDialog>
+#include <QStatusBar>
+#include <QMenuBar>
 
 class MainWindow : public QMainWindow{
     Q_OBJECT
@@ -21,6 +25,9 @@ private :
     QDockWidget *               mesherDockWidget;
 
     void initViewerDockWidgets(MultiMeshViewer* m_viewer);
+
+ public slots:
+    void openTetraFolder();
 };
 
 #endif // MAINWINDOW_H

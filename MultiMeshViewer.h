@@ -5,11 +5,14 @@
 #include "QGLViewer/qglviewer.h"
 #include <vector>
 #include "MeshModel.h"
+#include <QStatusBar>
+#include <QDir>
 
 class MultiMeshViewer: public QGLViewer{
     Q_OBJECT
 
 private :
+    bool loadedData;
     std::vector<MeshModel> m_meshes;
     int m_curModel;
 
@@ -46,6 +49,8 @@ public:
     void setDrawPolylines(int state);
     void setPolylineDrawMode(int mode);
 
+    void loadMeshes(QStatusBar *statusbar,QStringList filenames, QDir& directorySelected);
+
     std::map<Subdomain_index, QColor> getColorMap(){return m_colorMap;}
     const std::map<Subdomain_index, QColor> getColorMap()const {return m_colorMap;}
 
@@ -65,7 +70,6 @@ protected :
     void compileRenderingPrograms();
 
 public slots :
-    void test(){};
     void mainLoop();
     void onPlayerPaused();
     void onPlayerPlayed();
