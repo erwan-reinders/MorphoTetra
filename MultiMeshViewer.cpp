@@ -49,6 +49,7 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     connect(timer, SIGNAL(timeout()), this, SLOT(mainLoop()));
     timer->start(m_wantedDeltaTime);
     //help();
+
 }
 
 MultiMeshViewer::~MultiMeshViewer(){
@@ -212,6 +213,7 @@ void MultiMeshViewer::draw(){
     }
 
     mesh_glProgram.glFunctions->glUseProgram(0);
+
 }
 
 void MultiMeshViewer::clear(){
@@ -261,10 +263,6 @@ void MultiMeshViewer::onPlayerValueChanged(double doubleValue) {
 void MultiMeshViewer::initLigthAndMaterial(){}
 
 void MultiMeshViewer::initCurrentDisplayedMesh(){
-    std::cout << "[MULTI MESH VIEWER] init current displayed mesh" << std::endl;
-
-    std::cout << "center : " << m_meshes[m_curModel].m_center[0] << "," <<  m_meshes[m_curModel].m_center[1] << "," << m_meshes[m_curModel].m_center[2] << std::endl;
-    std::cout << "radius : " << m_meshes[m_curModel].m_radius << std::endl;
     camera()->setSceneCenter(m_meshes[m_curModel].m_center);
     camera()->setSceneRadius(m_meshes[m_curModel].m_radius);
     camera()->showEntireScene();
@@ -326,28 +324,26 @@ void MultiMeshViewer::computeRandomColors(const std::vector<int> & subdomain_ind
 
 
 void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  QDir& directorySelected){
-    std::cout << " ============ LOAD MESH" <<std::endl;
-
     m_meshes.clear();
     QString filename;
+    int i = 0;
     foreach (filename, filenames) {
         QString file = directorySelected.absoluteFilePath(filename);
 
         statusbar->showMessage("Opening tetra mesh : " + file);
+        update();
 
-
-        std::string filenamestr = file.toStdString();
-
-        if(filename.endsWith(".mesh")){
-            m_meshes.push_back(MeshModel(filenamestr.c_str()));
-        }else{
-            if(filename.endsWith(".inr")){
-                std::cout << filename.toStdString() << std::endl;
-                m_meshes.push_back(MeshModel());
-                m_meshes[m_meshes.size()-1].initFromInrFile(filenamestr.c_str());
-            }
-            statusbar->showMessage("Tetra mesh opened !");
+        m_meshes.push_back(MeshModel());
+        if (i%2 == 0) {
+            m_meshes[m_meshes.size()-1].initFromFile(file);
         }
+        else {
+            m_meshes[m_meshes.size()-1].initWithRemeshing(file);
+        }
+        i++;
+
+        statusbar->showMessage("Tetra mesh opened !");
+        update();
     }
 
 
@@ -370,8 +366,6 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  
     //initAllMesh();
     initCurrentDisplayedMesh();
     emit setMeshSubdomains();
-
-
 
     emit setMaxCutPlanes(1000, 1000, 1000);
 }

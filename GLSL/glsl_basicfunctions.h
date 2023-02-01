@@ -103,11 +103,6 @@ inline namespace GLTools{
     }
 
     inline void setPointLight(GLuint program, QOpenGLExtraFunctions*  cur_glFunctions, int nb_ptl, qglviewer::Vec position,float constant,float linear,float quadratic,qglviewer::Vec ambient,qglviewer::Vec diffuse, qglviewer::Vec specular){
-        std::cout << "SET PL : " << std::endl;
-        std::cout << "pos      : " << position[0] << "," << position[1] << "," << position[2] << std::endl;
-        std::cout << "ambient  : " << ambient[0] << "," << ambient[1] << "," << ambient[2] << std::endl;
-        std::cout << "diffuse  : " << diffuse[0] << "," << diffuse[1] << "," << diffuse[2] << std::endl;
-        std::cout << "specular : " << specular[0] << "," << specular[1] << "," << specular[2] << std::endl;
 
         cur_glFunctions->glUniform3f(cur_glFunctions->glGetUniformLocation(program, getStrPLightElement(nb_ptl, SHADERS_name_pointLposition).c_str()),
                                      position[0], position[1], position[2]);

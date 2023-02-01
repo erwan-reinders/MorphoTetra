@@ -7,8 +7,6 @@
 #include <QGLViewer/vec.h>
 #include <QGLViewer/camera.h>
 
-#include "Math_utilitiesfnc.h"
-
 #include "CGAL/cgal_headers.h"
 #include "CGAL/Tetrahedron.h"
 #include "CGAL/Triangle.h"
@@ -82,15 +80,14 @@ public:
     float           m_radius;
 
     MeshModel();
-    MeshModel(const char* filename);
     virtual ~MeshModel();
 
-    void initFromInrFile(const char* filename);
-    void initFromMeshFile(const char* filename);
+    void initFromFile(QString filename);
+    void initWithRemeshing(QString filename);
 
     void initDrawingBuffers(ShaderProgram& renderingProgram);
     void initGLSL(ShaderProgram& renderingProgram);
-    void initCGAL(const char* filename);
+    void initMeshData(C3t3 & m_c3t3);
 
     void drawMesh(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
     void drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap);

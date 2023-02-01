@@ -1,5 +1,7 @@
 #include "MeshModel.h"
-#include "QGLViewer/manipulatedFrame.h"
+//#include "QGLViewer/manipulatedFrame.h"
+
+#include "Math_utilitiesfnc.h"
 
 #include <CGAL/Labeled_mesh_domain_3.h>
 
@@ -7,19 +9,14 @@
 #include "CGAL/cgal_basicfunctions.h"
 
 MeshModel::MeshModel(){
-
-}
-
-MeshModel::MeshModel(const char* filename){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
+
     m_smoothPolylineSubdivisionNumber = 8.0f;
     m_verticesBufferPos     = 0;
     m_dimensionsBufferPos   = 2;
     m_normalsBufferPos      = 1;
 
     m_glslInitialised = false;
-
-    initFromMeshFile(filename);
 }
 
 MeshModel::~MeshModel(){}
@@ -28,81 +25,24 @@ bool MeshModel::initialized() {
     return m_glslInitialised;
 }
 
-void MeshModel::initFromMeshFile(const char* filename){
-    initCGAL(filename);
-    recomputeNormals();
-}
-
-void MeshModel::initFromInrFile(const char* filename) {
-    if(DEBUGAPP) std::cout << "[Model] init" << std::endl;
-
-    m_smoothPolylineSubdivisionNumber = 8.0f;    
-    m_verticesBufferPos     = 0;
-    m_dimensionsBufferPos   = 2;
-    m_normalsBufferPos      = 1;
-
-    m_glslInitialised = false;
-
-    if(DEBUGAPP) std::cout << "[Model] init CGAL Inr (" << filename << ")" << std::endl;
-
+void MeshModel::initFromFile(QString filename) {
     C3t3 m_c3t3;
-    CGAL::Image_3 image;
-    image.read(filename);
-    std::cout << "img read" << std::endl;
+    getC3t3FromFile(filename, m_c3t3);
 
-    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image, 1e-9);        // Domain
-    //Mesh_domain domain = Mesh_domain::create_labeled_image_mesh_domain(image);
-
-    std::cout << "domain" << std::endl;
-
-    // Mesh criteria
-    Mesh_criteria::Edge_criteria edge_criteria(6);
-    Mesh_criteria::Facet_criteria facet_criteria(30, 10, 1); // angle, size, approximation
-    Mesh_criteria::Cell_criteria cell_criteria(0, 0);        // radius-edge ratio, size
-    Mesh_criteria criteria(facet_criteria, cell_criteria);
-
-    std::cout << "criteria" << std::endl;
-
-    // Meshing
-    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, CGAL::parameters::no_exude(), CGAL::parameters::no_perturb());
-
-    std::cout << "BB" << std::endl;
-    CGAL::Bbox_3 bbox = m_c3t3.bbox();
-    m_center = qglviewer::Vec ((bbox.xmax() - bbox.xmin())/2., (bbox.ymax() - bbox.ymin())/2., (bbox.zmax() - bbox.zmin())/2.);
-    m_radius = std::max(std::max(bbox.xmax() - bbox.xmin(), bbox.ymax() - bbox.ymin()), bbox.zmax() - bbox.zmin())*2.;
-
-    //testCGAL(m_c3t3);
-    Tr & m_t = m_c3t3.triangulation();
-
-    std::cout << "COMPUTE CARAC EDGES ! " << std::endl;
-    std::vector<C3t3::Edge> caracEdge;
-    computeCaracteristicEdges(m_c3t3, caracEdge);
-
-    std::cout << "GET POLYLINE ! " << std::endl;
-    getPolyline(m_polyLines, m_c3t3, caracEdge);
-
-    std::cout << "GET GROUP POLYLINE ! " << std::endl;
-    getGroupPolyline(m_t, m_polyLines, m_groupPolyLines);
-
-    //std::map<Vertex_handle, int> VMap;
-    //getVerticesAndMap(m_c3t3 ,m_t, m_vertices, m_verticesDimensions, VMap);
-    //std::map<Cell_handle, int> CMap;
-    //getTriangulationAndCgalEnvelop(m_c3t3,m_t,VMap, m_triangles, m_triangles_subdomain_ids, m_CGAL_envelop, m_surface_indices);
-    //getTetrahedronAndMap(m_c3t3,m_t, VMap,m_tetrahedra,m_tetrahedra_subdomain_ids, CMap);
-    //sortTriangleAndTetraBySubdomainIndex(m_triangles,m_triangles_subdomain_ids ,m_tetrahedra,m_tetrahedra_subdomain_ids, m_sortedTriangles, m_sortedTetrahedra, m_subdomain_indices);
-
-    CGALGeometry(m_c3t3);
-
-    if(DEBUGAPP){
-        std::cout << "[Model] init CGAL END" << std::endl;
-        std::cout << "vertices size : " << m_vertices.size() << std::endl;
-        std::cout << "triangles size : " << m_triangles.size() << std::endl;
-        std::cout << "tetrahedra size : " << m_tetrahedra.size() << std::endl;
-        std::cout << "polylines size : " << m_polyLines.size() << std::endl;
-        std::cout << "group polylines size : " << m_groupPolyLines.size() << std::endl;
-    }
-    recomputeNormals();
+    initMeshData(m_c3t3);
 }
+
+void MeshModel::initWithRemeshing(QString filename) {
+    C3t3 m_c3t3;
+    getC3t3FromFile(filename, m_c3t3);
+
+//    Triangulation_3 tr = CGAL::convert_to_triangulation_3(std::move(m_c3t3));
+//    const double target_edge_length = 1.0;
+//    CGAL::tetrahedral_isotropic_remeshing(tr, target_edge_length, CGAL::parameters::number_of_iterations(3));
+
+    initMeshData(m_c3t3);
+}
+
 
 void MeshModel::initDrawingBuffers(ShaderProgram& renderingProgram){
     renderingProgram.glFunctions->glGenVertexArrays(1, &m_VAO);
@@ -312,7 +252,7 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
             surf_v_count++;
     }
 
-    std::cout << 100.*float(surf_v_count) / m_c3t3.triangulation().number_of_vertices() << " % of vertices on boundaries" << std::endl;
+    //std::cout << 100.*float(surf_v_count) / m_c3t3.triangulation().number_of_vertices() << " % of vertices on boundaries" << std::endl;
 
     for(Triangulation::Finite_facets_iterator fit = triangulation.finite_facets_begin() ; fit != triangulation.finite_facets_end() ; ++fit ){
 
@@ -576,20 +516,12 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
     }
 }
 
-void MeshModel::initCGAL(const char* filename){
-    if(DEBUGAPP) std::cout << "[Model] init CGAL" << std::endl;
-
-    C3t3 m_c3t3;
-    std::ifstream c3t3_load(filename);
-    c3t3_load >> m_c3t3;
-
+void MeshModel::initMeshData(C3t3 & m_c3t3) {
     CGAL::Bbox_3 bbox = m_c3t3.bbox();
     m_center = qglviewer::Vec ((bbox.xmax() - bbox.xmin())/2., (bbox.ymax() - bbox.ymin())/2., (bbox.zmax() - bbox.zmin())/2.);
-    m_radius = std::max(std::max(bbox.xmax() - bbox.xmin(), bbox.ymax() - bbox.ymin()), bbox.zmax() - bbox.zmin())*2.;
+    m_radius = std::max(std::max(bbox.xmax() - bbox.xmin(), bbox.ymax() - bbox.ymin()), bbox.zmax() - bbox.zmin())*2.0;
 
-    //testCGAL(m_c3t3);
     Tr & m_t = m_c3t3.triangulation();
-
 
     std::vector<C3t3::Edge> caracEdge;
     computeCaracteristicEdges(m_c3t3, caracEdge);
@@ -597,18 +529,12 @@ void MeshModel::initCGAL(const char* filename){
     getPolyline(m_polyLines, m_c3t3, caracEdge);
     getGroupPolyline(m_t, m_polyLines, m_groupPolyLines);
 
-    //std::map<Vertex_handle, int> VMap;
-    //getVerticesAndMap(m_c3t3 ,m_t, m_vertices, m_verticesDimensions, VMap);
-    //std::map<Cell_handle, int> CMap;
-    //getTriangulationAndCgalEnvelop(m_c3t3,m_t,VMap, m_triangles, m_triangles_subdomain_ids, m_CGAL_envelop, m_surface_indices);
-    //getTetrahedronAndMap(m_c3t3,m_t, VMap,m_tetrahedra,m_tetrahedra_subdomain_ids, CMap);
-    //sortTriangleAndTetraBySubdomainIndex(m_triangles,m_triangles_subdomain_ids ,m_tetrahedra,m_tetrahedra_subdomain_ids, m_sortedTriangles, m_sortedTetrahedra, m_subdomain_indices);
-
-
     CGALGeometry(m_c3t3);
 
+    recomputeNormals();
+
     if(DEBUGAPP){
-        std::cout << "[Model] init CGAL END" << std::endl;
+        std::cout << "[Model] init MESH DATA END" << std::endl;
         std::cout << "vertices size : " << m_vertices.size() << std::endl;
         std::cout << "triangles size : " << m_triangles.size() << std::endl;
         std::cout << "tetrahedra size : " << m_tetrahedra.size() << std::endl;
@@ -616,7 +542,6 @@ void MeshModel::initCGAL(const char* filename){
         std::cout << "group polylines size : " << m_groupPolyLines.size() << std::endl;
     }
 }
-
 
 
 void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {

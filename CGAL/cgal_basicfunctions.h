@@ -8,6 +8,12 @@
 #include "Tetrahedron.h"
 #include "QGLViewer/vec.h"
 
+#define CELL_RATIO 10.//3.
+#define CELL_SIZE 20. //5.
+
+#define FACET_ANGLE 30.
+#define FACET_SIZE 10.//2.
+#define FACET_APPROXIMATION 1.//4.
 
 bool edgeInVector(C3t3::Edge &edge, std::vector<C3t3::Edge> &tab){
     for (unsigned int i = 0; i < tab.size(); i++)
@@ -383,6 +389,108 @@ void getTetrahedronAndMap(const C3t3 c3t3,const Tr t, std::map<Vertex_handle, in
         }
         tetrahedra.push_back(tet);
         tetrahedra_subdomain_ids.push_back(si);
+    }
+}
+
+void getC3t3FromMeshFile(const char* filename, C3t3 & m_c3t3) {
+    std::ifstream c3t3_load(filename);
+    c3t3_load >> m_c3t3;
+    c3t3_load.close();
+}
+
+void getC3t3FromInrFile(const char* filename, C3t3 & m_c3t3) {
+    CGAL::Image_3 image;
+    image.read(filename);
+
+    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);        // Domain
+
+    // Mesh criteria
+    //Mesh_criteria::Edge_criteria edge_criteria(6);
+    Mesh_criteria::Facet_criteria facet_criteria(FACET_ANGLE, FACET_SIZE, FACET_APPROXIMATION); // angle, size, approximation
+    Mesh_criteria::Cell_criteria cell_criteria(CELL_RATIO, CELL_SIZE);        // radius-edge ratio, size
+    Mesh_criteria criteria(facet_criteria, cell_criteria);
+
+    // Meshing
+    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, CGAL::parameters::no_exude(), CGAL::parameters::no_perturb());
+}
+
+void getC3t3FromInrFileWithRemeshing(const char* filename, C3t3 & m_c3t3) {
+    CGAL::Image_3 image;
+    image.read(filename);
+
+    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);        // Domain
+
+    // Mesh criteria
+    //Mesh_criteria::Edge_criteria edge_criteria(6);
+    Mesh_criteria::Facet_criteria facet_criteria(FACET_ANGLE, FACET_SIZE, FACET_APPROXIMATION); // angle, size, approximation
+    Mesh_criteria::Cell_criteria cell_criteria(CELL_RATIO, CELL_SIZE);        // radius-edge ratio, size
+    Mesh_criteria criteria(facet_criteria, cell_criteria);
+
+    // Meshing
+    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, CGAL::parameters::no_exude(), CGAL::parameters::no_perturb());
+
+//    std::cout << "ODT" << std::endl;
+    CGAL::odt_optimize_mesh_3(m_c3t3,
+                        domain,
+                        CGAL::parameters::max_iteration_number = 100,
+                        CGAL::parameters::convergence = 0,
+                        CGAL::parameters::time_limit=30);
+
+//    std::cout << "lloyd" << std::endl;
+//    CGAL::lloyd_optimize_mesh_3(m_c3t3,
+//                        domain,
+//                        CGAL::parameters::convergence=0.01,
+//                        CGAL::parameters::time_limit=10);
+
+//    std::cout << "perturb" << std::endl;
+//    CGAL::perturb_mesh_3(m_c3t3,
+//                        domain,
+//                        CGAL::parameters::sliver_bound = 10,
+//                        CGAL::parameters::time_limit=10);
+
+//    std::cout << "exude" << std::endl;
+//    CGAL::exude_mesh_3(m_c3t3,
+//                        CGAL::parameters::time_limit=10);
+
+
+//    CGAL::Labeled_mesh_domain_3<K> domainNew = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);
+//    Mesh_criteria::Facet_criteria facet_criteria2(30, 10, 1); // angle, size, approximation
+//    Mesh_criteria::Cell_criteria cell_criteria2(0, 0);        // radius-edge ratio, size
+//    Mesh_criteria criteria2(facet_criteria2, cell_criteria2);
+
+
+//    CGAL::refine_mesh_3(m_c3t3, domain, criteria,
+//            CGAL::parameters::lloyd(),
+//            CGAL::parameters::odt(),
+//            CGAL::parameters::perturb(),
+//            CGAL::parameters::exude(),
+//            CGAL::parameters::manifold()
+//        );
+
+    //CGAL::refine_mesh_3(m_c3t3, domain, criteria);
+//    CGAL::refine_mesh_3(m_c3t3, domain, criteria,
+//                CGAL::parameters::exude(),
+//                CGAL::parameters::perturb(),
+//                CGAL::parameters::odt(),
+//                CGAL::parameters::lloyd(),
+//                CGAL::parameters::manifold()
+//            );
+
+//    Mesh_criteria new_criteria(CGAL::parameters::cell_radius_edge_ratio=3, CGAL::parameters::cell_size=0.03);
+//    using namespace CGAL::parameters;
+//    CGAL::refine_mesh_3(m_c3t3, domain, new_criteria, manifold());
+}
+
+void getC3t3FromFile(QString filename, C3t3 & m_c3t3, bool remeshing = false) {
+    if(filename.endsWith(".mesh")){
+        getC3t3FromMeshFile(filename.toStdString().c_str(), m_c3t3);
+    }else if (filename.endsWith(".inr")) {
+        if (remeshing) {
+            getC3t3FromInrFileWithRemeshing(filename.toStdString().c_str(), m_c3t3);
+        }
+        else {
+            getC3t3FromInrFile(filename.toStdString().c_str(), m_c3t3);
+        }
     }
 }
 

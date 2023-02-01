@@ -14,7 +14,10 @@
 
 #include <CGAL/Labeled_mesh_domain_3.h>
 #include <CGAL/make_mesh_3.h>
+#include <CGAL/refine_mesh_3.h>
 #include <CGAL/Image_3.h>
+
+//#include <CGAL/tetrahedral_remeshing.h>
 
 // Domain
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
@@ -32,6 +35,9 @@ typedef CGAL::Sequential_tag Concurrency_tag;
 typedef CGAL::Mesh_triangulation_3<Mesh_domain,CGAL::Default,Concurrency_tag>::type Tr;
 
 typedef CGAL::Mesh_complex_3_in_triangulation_3<Tr> C3t3;
+
+// Triangulation for Remeshing
+//typedef CGAL::Triangulation_3<typename Tr::Geom_traits, typename Tr::Triangulation_data_structure> Triangulation_3;
 
 // Criteria
 typedef CGAL::Mesh_criteria_3<Tr> Mesh_criteria;
