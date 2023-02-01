@@ -9,9 +9,11 @@
 
 QT += widgets core gui opengl xml openglwidgets
 
-VCPKG_CGAL_P = C:\dev\vcpkg\installed\x64-windows
+#VCPKG_CGAL_P = C:\dev\vcpkg\installed\x64-windows
+VCPKG_CGAL_P = C:\Users\aclement\Desktop\dev\vcpkg\installed\x64-windows
 #QGLViewer_P  = C:\Users\reind\Desktop\HAI911I_Developpement_Application_interactive\libQGLViewer-2.8.0_faraj
-QGLViewer_P  = C:\dev\libQGlViewer\libQGLViewer-2.8.0
+#QGLViewer_P  = C:\dev\libQGlViewer\libQGLViewer-2.8.0
+QGLViewer_P  = C:\Users\aclement\Desktop\dev\libQGLViewer\libQGLViewer-2.9.1
 
 TARGET = mophoTetra
 TEMPLATE = app

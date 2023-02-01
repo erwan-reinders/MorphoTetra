@@ -28,6 +28,7 @@ private :
 
     bool m_drawWireFrame;
     bool m_drawMesh;
+    int  m_meshDrawMode;
     bool m_drawPoints;
     bool m_drawPolylines;
     int  m_polylineDrawMode;
@@ -44,7 +45,8 @@ public:
     void selectAll();
     void discardAll();
     void setVisibility(unsigned int i, bool visibility);
-    void setDrawMesh(int state);
+    void setDrawMesh(bool state);
+    void setMeshDrawMode(int mode);
     void setDrawVertices(int state);
     void setDrawPolylines(int state);
     void setPolylineDrawMode(int mode);

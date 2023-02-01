@@ -140,8 +140,14 @@ void MultiMeshViewer::setVisibility(unsigned int i, bool visibility){
     update();
 }
 
-void MultiMeshViewer::setDrawMesh(int state) {
+void MultiMeshViewer::setDrawMesh(bool state) {
     m_drawMesh = state;
+    update();
+}
+
+
+void MultiMeshViewer::setMeshDrawMode(int mode) {
+    m_meshDrawMode = mode;
     update();
 }
 
@@ -195,7 +201,7 @@ void MultiMeshViewer::draw(){
         mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
         initMatrix(mesh_glProgram);
         //glEnable(GL_DEPTH_TEST);
-        m_meshes[m_curModel].drawMesh(mesh_glProgram,m_displayMap,m_colorMap);
+        m_meshes[m_curModel].drawMesh(mesh_glProgram,m_displayMap,m_colorMap,m_meshDrawMode);
     }
 
     if(m_drawPolylines){

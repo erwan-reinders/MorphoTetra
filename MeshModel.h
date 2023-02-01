@@ -75,6 +75,9 @@ protected :
 
     void CGALGeometry(C3t3 & m_c3t3);
 
+    void drawMeshTriangles(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
+    void drawMeshTetra    (ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
+
 public:
     qglviewer::Vec  m_center;
     float           m_radius;
@@ -89,7 +92,7 @@ public:
     void initGLSL(ShaderProgram& renderingProgram);
     void initMeshData(C3t3 & m_c3t3);
 
-    void drawMesh(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap);
+    void drawMesh(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap, int meshDrawMode);
     void drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap);
     void drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, int polylineDrawMode);
 

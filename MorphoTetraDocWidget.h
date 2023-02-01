@@ -48,7 +48,9 @@ public slots :
     void setMeshSubDomains();
     void addMeshSubDomains(const std::map<Subdomain_index, QColor> & colors);
 
-    void setDrawMesh(int state);
+    void setDrawMesh(bool state);
+    void setMeshModeTriangles(bool state);
+    void setMeshModeTetrahedral(bool state);
     void setDrawVertices(int state);
     void setDrawPolylines(bool state);
     void setPolylineModeLinear(bool state);

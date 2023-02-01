@@ -224,7 +224,7 @@ void MeshModel::CGALGeometry(C3t3 & m_c3t3){
 
 
     int indices[4][3] = {
-        {3,1,2},
+        {1,2,3},
         {3,2,0},
         {3,0,1},
         {2,1,0}
@@ -543,9 +543,7 @@ void MeshModel::initMeshData(C3t3 & m_c3t3) {
     }
 }
 
-
-void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
-
+void MeshModel::drawMeshTriangles(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
     renderingProgram.glFunctions->glBindVertexArray(m_VAO);
 
     std::map<Subdomain_index, QColor>::const_iterator itCol;
@@ -601,6 +599,92 @@ void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_ind
     renderingProgram.glFunctions->glBindVertexArray(0);
     //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void MeshModel::drawMeshTetra(ShaderProgram& renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap) {
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO);
+
+    std::map<Subdomain_index, QColor>::const_iterator itCol;
+    QColor color;
+
+    std::vector<unsigned int> drawIndex;
+
+    float* drawNormals;
+
+    int indices[4][3] = {
+        {1,2,3},
+        {3,2,0},
+        {3,0,1},
+        {2,1,0}
+    };
+
+    for(std::map<Subdomain_index, std::vector<int> >::iterator it = m_sortedTetrahedra.begin(); it != m_sortedTetrahedra.end() ; it ++  ){
+        Subdomain_index si = it->first;
+
+        if(displayMap[si]){
+            drawNormals = new float[m_vertices.size()*3]{};
+            itCol = colorMap.find(si);
+            if( itCol == colorMap.end() )
+                color.setHsvF(0.5, 1.,1.);
+            else
+                color = itCol->second;
+
+            for (unsigned int tetr = 0; tetr < it->second.size(); tetr++) {
+                int te = it->second[tetr];
+                Tetrahedron t = m_tetrahedra[te];
+
+                qglviewer::Vec center = qglviewer::Vec(0.0, 0.0, 0.0);
+                for(int i = 0; i<4;i++){
+                    center = center + m_vertices[t[i]];
+                }
+                center = 0.25 * center;
+
+                for(int i = 0; i<4;i++){
+                    for (int j = 0; j < 3; j++) {
+                        drawIndex.push_back(t[indices[i][j]]);
+
+                        qglviewer::Vec normal = m_vertices[t[indices[i][j]]] - center;
+
+                        drawNormals[t[i]*3]   += normal[0];
+                        drawNormals[t[i]*3+1] += normal[1];
+                        drawNormals[t[i]*3+2] += normal[2];
+                    }
+                }
+            }
+
+
+            renderingProgram.glFunctions->glUniform3f(
+                        renderingProgram.glFunctions->glGetUniformLocation(renderingProgram.programID, "u_color")
+                        ,color.redF(),color.greenF(),color.blueF());
+
+            renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_normalsBuffer);
+
+            renderingProgram.glFunctions->glBufferData(GL_ARRAY_BUFFER, m_vertices.size()*3 * sizeof(float), drawNormals, GL_STATIC_DRAW);
+
+            renderingProgram.glFunctions->glVertexAttribPointer(m_normalsBufferPos, 3, GL_FLOAT, GL_TRUE,  3 * sizeof(float), (void*)0);
+
+            renderingProgram.glFunctions->glDrawElements(GL_TRIANGLES, drawIndex.size(), GL_UNSIGNED_INT, &drawIndex[0]);
+
+            drawIndex.clear();
+            delete[] drawNormals;
+
+            renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+            checkOpenGLError();
+        }
+    }
+
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void MeshModel::drawMesh(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap, std::map<Subdomain_index, QColor>& colorMap, int meshDrawMode) {
+    if (meshDrawMode == 0) {
+        drawMeshTriangles(renderingProgram, displayMap, colorMap);
+    }
+    else if (meshDrawMode == 1) {
+        drawMeshTetra(renderingProgram, displayMap, colorMap);
+    }
 }
 
 void MeshModel::drawVerticies(ShaderProgram&  renderingProgram,std::map<Subdomain_index, bool> displayMap) {

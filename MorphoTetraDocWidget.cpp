@@ -89,10 +89,24 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     QPushButton *discardIPushButton = new QPushButton("Discard All", m_displaySubdomainsBox);
     segIGridKayout->addWidget(discardIPushButton, 0, 1, 1, 1);
 
-    // ========= CHECKBOX
-    QCheckBox * setDrawMeshBox = new QCheckBox("Draw Mesh", m_displaySubdomainsBox);
-    setDrawMeshBox->setChecked(true);
-    segIGridKayout->addWidget(setDrawMeshBox, 1, 0, 1, 2);
+    // ========= CHECKBOXES
+//    QCheckBox * setDrawMeshBox = new QCheckBox("Draw Mesh", m_displaySubdomainsBox);
+//    setDrawMeshBox->setChecked(true);
+//    segIGridKayout->addWidget(setDrawMeshBox, 1, 0, 1, 2);
+
+    QGroupBox * meshDrawModeGroup = new QGroupBox("Draw Mesh", m_displaySubdomainsBox);
+    meshDrawModeGroup->setCheckable(true);
+    meshDrawModeGroup->setChecked(true);
+    segIGridKayout->addWidget(meshDrawModeGroup, 1, 0, 1, 2);
+
+    QVBoxLayout * meshDrawModeGroupLayout = new QVBoxLayout(meshDrawModeGroup);
+    QRadioButton * triangleModeRadio = new QRadioButton("Triangles");
+    QRadioButton * tetrahedralModeRadio = new QRadioButton("Tetrahedral");
+    triangleModeRadio->setChecked(true);
+    meshDrawModeGroupLayout->addWidget(triangleModeRadio);
+    meshDrawModeGroupLayout->addWidget(tetrahedralModeRadio);
+
+
 
     QCheckBox * setDrawVerticesBox = new QCheckBox("Draw Vertices", m_displaySubdomainsBox);
     setDrawVerticesBox->setChecked(false);
@@ -123,13 +137,15 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
 
     segIVLayout->addStretch(0);
 
-    connect(discardIPushButton, SIGNAL(clicked()), this, SLOT(discardAll()));
-    connect(selectIPushButton, SIGNAL(clicked()), this, SLOT(selectAll()));
-    connect(setDrawMeshBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawMesh(int)));
-    connect(setDrawVerticesBox, SIGNAL(stateChanged(int)), this, SLOT(setDrawVertices(int)));
-    connect(polylineDrawModeGroup, SIGNAL(clicked(bool)), this, SLOT(setDrawPolylines(bool)));
-    connect(linearModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeLinear(bool)));
-    connect(CRModeRadio, SIGNAL(clicked(bool)), this, SLOT(setPolylineModeSmooth(bool)));
+    connect(discardIPushButton,    SIGNAL(clicked()),         this, SLOT(discardAll()));
+    connect(selectIPushButton,     SIGNAL(clicked()),         this, SLOT(selectAll()));
+    connect(meshDrawModeGroup,     SIGNAL(clicked(bool)),     this, SLOT(setDrawMesh(bool)));
+    connect(triangleModeRadio,     SIGNAL(clicked(bool)),     this, SLOT(setMeshModeTriangles(bool)));
+    connect(tetrahedralModeRadio,  SIGNAL(clicked(bool)),     this, SLOT(setMeshModeTetrahedral(bool)));
+    connect(setDrawVerticesBox,    SIGNAL(stateChanged(int)), this, SLOT(setDrawVertices(int)));
+    connect(polylineDrawModeGroup, SIGNAL(clicked(bool)),     this, SLOT(setDrawPolylines(bool)));
+    connect(linearModeRadio,       SIGNAL(clicked(bool)),     this, SLOT(setPolylineModeLinear(bool)));
+    connect(CRModeRadio,           SIGNAL(clicked(bool)),     this, SLOT(setPolylineModeSmooth(bool)));
 
 
     connect(m_viewer,SIGNAL(setMaxCutPlanes(int,int,int)), this, SLOT(setMaxCutPlanes(int,int,int)));
@@ -229,8 +245,20 @@ void MorphoTetraDocWidget::discardAll(){
     m_viewer->discardAll();
 }
 
-void MorphoTetraDocWidget::setDrawMesh(int state) {
+void MorphoTetraDocWidget::setDrawMesh(bool state) {
     m_viewer->setDrawMesh(state);
+}
+
+void MorphoTetraDocWidget::setMeshModeTriangles(bool state) {
+    if (state) {
+        m_viewer->setMeshDrawMode(0);
+    }
+}
+
+void MorphoTetraDocWidget::setMeshModeTetrahedral(bool state) {
+    if (state) {
+        m_viewer->setMeshDrawMode(1);
+    }
 }
 
 void MorphoTetraDocWidget::setDrawVertices(int state) {
