@@ -29,6 +29,7 @@ float Sqr( in float fX ){
 
 
 in vec3 normal;
+flat in vec3 flat_normal;
 in vec3 position;
 in float visibility;
 
@@ -42,6 +43,8 @@ uniform float u_shininess;
 uniform float u_alpha = 1.0;
 
 uniform bool solid = false;
+
+uniform bool u_flat_shading = false;
 
 //Ligth integration
 struct PointLight {    
@@ -138,6 +141,8 @@ vec3 CalcSpecularSchlick( PointLight  vLightDef,vec3 vLightVec,vec3 vNormal,vec3
 
 void main (void) {
 
+    vec3 m_normal = u_flat_shading ? flat_normal : normal;
+
     float alpha = 1.;
     if(visibility > 0.) discard;
     
@@ -221,7 +226,7 @@ void main (void) {
         for(int i = 0; i<nb_pointlight; i++) {
             PointLight cur_light = pointLights[i];
 
-            vec3 N_Normed = normalize(normal); // Normal
+            vec3 N_Normed = normalize(m_normal); // Normal
             vec3 V_Normed = normalize(position); //Position
 
             vec3 vLightDir = cur_light.position - position;

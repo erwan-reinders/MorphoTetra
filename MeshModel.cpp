@@ -633,17 +633,23 @@ void MeshModel::drawMeshTetra(ShaderProgram& renderingProgram,std::map<Subdomain
                 int te = it->second[tetr];
                 Tetrahedron t = m_tetrahedra[te];
 
-                qglviewer::Vec center = qglviewer::Vec(0.0, 0.0, 0.0);
-                for(int i = 0; i<4;i++){
-                    center = center + m_vertices[t[i]];
-                }
-                center = 0.25 * center;
+//                qglviewer::Vec center = qglviewer::Vec(0.0, 0.0, 0.0);
+//                for(int i = 0; i<4;i++){
+//                    center = center + m_vertices[t[i]];
+//                }
+//                center = 0.25 * center;
 
                 for(int i = 0; i<4;i++){
+
+                    qglviewer::Vec e01 = m_vertices[t[indices[i][1]]] - m_vertices[t[indices[i][0]]];
+                    qglviewer::Vec e02 = m_vertices[t[indices[i][2]]] - m_vertices[t[indices[i][0]]];
+                    qglviewer::Vec normal = e01 ^ e02;
+                    normal.normalize();
+
                     for (int j = 0; j < 3; j++) {
                         drawIndex.push_back(t[indices[i][j]]);
 
-                        qglviewer::Vec normal = m_vertices[t[indices[i][j]]] - center;
+//                        qglviewer::Vec normal = m_vertices[t[indices[i][j]]] - center;
 
                         drawNormals[t[i]*3]   += normal[0];
                         drawNormals[t[i]*3+1] += normal[1];

@@ -35,7 +35,7 @@ private :
     QSlider * zHSlider;
 
 protected :
-    void setSubdomainsElement(QVBoxLayout * contentLayout);
+    void setSubdomainsElement(QLayout * contentLayout);
 
 public:
     MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * parent );
@@ -51,6 +51,9 @@ public slots :
     void setDrawMesh(bool state);
     void setMeshModeTriangles(bool state);
     void setMeshModeTetrahedral(bool state);
+    void setDrawWire(bool state);
+    void setWireModeTriangles(bool state);
+    void setWireModeTetrahedral(bool state);
     void setDrawVertices(int state);
     void setDrawPolylines(bool state);
     void setPolylineModeLinear(bool state);

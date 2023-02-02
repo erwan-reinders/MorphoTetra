@@ -3,7 +3,7 @@
 MorphoTetraDocWidget::MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * parent)  : QDockWidget(parent){
     m_viewer = _viewer;
     QWidget * contents = new QWidget();
-    QVBoxLayout * contentLayout = new QVBoxLayout(contents);
+    QHBoxLayout * contentLayout = new QHBoxLayout(contents);
     setSubdomainsElement(contentLayout);
 
     this->setWidget(contents);
@@ -11,77 +11,80 @@ MorphoTetraDocWidget::MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * 
 
 MorphoTetraDocWidget::~MorphoTetraDocWidget(){}
 
-void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
+void MorphoTetraDocWidget::setSubdomainsElement(QLayout * contentLayout){
 
-    QGroupBox * groupBox = new QGroupBox("Cutting plane", this);
-    groupBox->setMaximumSize(QSize(16777215, 200));
+    // === Cutting plane ===
 
-    contentLayout->addWidget ( groupBox) ;
+    QGroupBox * planeGroupBox = new QGroupBox("Cutting plane", this);
 
-    QGridLayout * cuttingPlaneGridLayout = new QGridLayout(groupBox);
-    xHSlider = new QSlider(groupBox);
+    contentLayout->addWidget(planeGroupBox);
+
+    QGridLayout * cuttingPlaneGridLayout = new QGridLayout(planeGroupBox);
+    xHSlider = new QSlider(planeGroupBox);
     xHSlider->setOrientation(Qt::Horizontal);
 
     cuttingPlaneGridLayout->addWidget(xHSlider, 1, 0, 1, 1);
 
-    yHSlider = new QSlider(groupBox);
+    yHSlider = new QSlider(planeGroupBox);
     yHSlider->setOrientation(Qt::Horizontal);
 
     cuttingPlaneGridLayout->addWidget(yHSlider, 3, 0, 1, 1);
 
-    zHSlider = new QSlider(groupBox);
+    zHSlider = new QSlider(planeGroupBox);
     zHSlider->setOrientation(Qt::Horizontal);
 
     cuttingPlaneGridLayout->addWidget(zHSlider, 5, 0, 1, 1);
 
-    QPushButton * invertXPushButton = new QPushButton("invert", groupBox);
+    QPushButton * invertXPushButton = new QPushButton("invert", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(invertXPushButton, 1, 1, 1, 1);
 
-    QPushButton * invertYPushButton = new QPushButton("invert", groupBox);
+    QPushButton * invertYPushButton = new QPushButton("invert", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(invertYPushButton, 3, 1, 1, 1);
 
-    QPushButton * invertZPushButton = new QPushButton("invert", groupBox);
+    QPushButton * invertZPushButton = new QPushButton("invert", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(invertZPushButton, 5, 1, 1, 1);
 
-    QLabel * labelCutX = new QLabel("x cut position", groupBox);
+    QLabel * labelCutX = new QLabel("x cut position", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(labelCutX, 0, 0, 1, 1);
 
-    QLabel * labelCutY = new QLabel("y cut position", groupBox);
+    QLabel * labelCutY = new QLabel("y cut position", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(labelCutY, 2, 0, 1, 1);
 
-    QLabel * labelCutZ = new QLabel("z cut position", groupBox);
+    QLabel * labelCutZ = new QLabel("z cut position", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(labelCutZ, 4, 0, 1, 1);
 
-    QCheckBox * displayXCut = new QCheckBox("display", groupBox);
+    QCheckBox * displayXCut = new QCheckBox("display", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(displayXCut, 0, 1, 1, 1);
 
-    QCheckBox * displayYCut = new QCheckBox("display", groupBox);
+    QCheckBox * displayYCut = new QCheckBox("display", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(displayYCut, 2, 1, 1, 1);
 
-    QCheckBox * displayZCut = new QCheckBox("display", groupBox);
+    QCheckBox * displayZCut = new QCheckBox("display", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(displayZCut, 4, 1, 1, 1);
 
 
+    // === Labels Diplay ===
 
 
     m_displaySubdomainsBox = new QGroupBox("Label display", this);
+    contentLayout->addWidget(m_displaySubdomainsBox);
 
     QVBoxLayout * segIVLayout = new QVBoxLayout(m_displaySubdomainsBox);
 
-    QFrame * segIFrame = new QFrame();
-    m_segIGridLayout = new QGridLayout(segIFrame);
-
     QScrollArea * displayIScrollArea = new QScrollArea(m_displaySubdomainsBox);
-    displayIScrollArea->setWidget(segIFrame);
-
+    segIVLayout->addWidget(displayIScrollArea);
     displayIScrollArea->setWidgetResizable(true);
     displayIScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    segIVLayout->addWidget(displayIScrollArea);
+    QFrame * segIFrame = new QFrame();
+    displayIScrollArea->setWidget(segIFrame);
+
+    m_segIGridLayout = new QGridLayout(segIFrame);
+
     m_signalIMapper = new QSignalMapper(m_displaySubdomainsBox);
 
-
     QGridLayout * segIGridKayout = new QGridLayout();
+    segIVLayout->addLayout(segIGridKayout);
 
     QPushButton *selectIPushButton = new QPushButton("Select All", m_displaySubdomainsBox);
     segIGridKayout->addWidget(selectIPushButton, 0, 0, 1, 1);
@@ -89,15 +92,23 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     QPushButton *discardIPushButton = new QPushButton("Discard All", m_displaySubdomainsBox);
     segIGridKayout->addWidget(discardIPushButton, 0, 1, 1, 1);
 
-    // ========= CHECKBOXES
-//    QCheckBox * setDrawMeshBox = new QCheckBox("Draw Mesh", m_displaySubdomainsBox);
-//    setDrawMeshBox->setChecked(true);
-//    segIGridKayout->addWidget(setDrawMeshBox, 1, 0, 1, 2);
 
-    QGroupBox * meshDrawModeGroup = new QGroupBox("Draw Mesh", m_displaySubdomainsBox);
+    // === Draw checkboxes ===
+
+
+    QGroupBox * drawGroupBox = new QGroupBox("Draw options", this);
+    contentLayout->addWidget(drawGroupBox);
+
+    QVBoxLayout * drawGroupLayout = new QVBoxLayout(drawGroupBox);
+
+    QCheckBox * flatShadingCheckBox = new QCheckBox("Flat shading");
+    drawGroupLayout->addWidget(flatShadingCheckBox);
+
+
+    QGroupBox * meshDrawModeGroup = new QGroupBox("Draw Mesh");
     meshDrawModeGroup->setCheckable(true);
     meshDrawModeGroup->setChecked(true);
-    segIGridKayout->addWidget(meshDrawModeGroup, 1, 0, 1, 2);
+    drawGroupLayout->addWidget(meshDrawModeGroup);
 
     QVBoxLayout * meshDrawModeGroupLayout = new QVBoxLayout(meshDrawModeGroup);
     QRadioButton * triangleModeRadio = new QRadioButton("Triangles");
@@ -107,21 +118,28 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     meshDrawModeGroupLayout->addWidget(tetrahedralModeRadio);
 
 
+    QGroupBox * wireDrawModeGroup = new QGroupBox("Draw Wireframe");
+    wireDrawModeGroup->setCheckable(true);
+    wireDrawModeGroup->setChecked(false);
+    drawGroupLayout->addWidget(wireDrawModeGroup);
 
-    QCheckBox * setDrawVerticesBox = new QCheckBox("Draw Vertices", m_displaySubdomainsBox);
+    QVBoxLayout * wireDrawModeGroupLayout = new QVBoxLayout(wireDrawModeGroup);
+    QRadioButton * wireTriangleModeRadio = new QRadioButton("Triangles");
+    QRadioButton * wireTetrahedralModeRadio = new QRadioButton("Tetrahedral");
+    wireTriangleModeRadio->setChecked(true);
+    wireDrawModeGroupLayout->addWidget(wireTriangleModeRadio);
+    wireDrawModeGroupLayout->addWidget(wireTetrahedralModeRadio);
+
+
+    QCheckBox * setDrawVerticesBox = new QCheckBox("Draw Vertices");
     setDrawVerticesBox->setChecked(false);
-    segIGridKayout->addWidget(setDrawVerticesBox, 2, 0, 1, 2);
+    drawGroupLayout->addWidget(setDrawVerticesBox);
 
 
-
-    //QCheckBox * setDrawPolylinesBox = new QCheckBox("Draw polylines", m_displaySubdomainsBox);
-    //setDrawPolylinesBox->setChecked(false);
-    //segIGridKayout->addWidget(setDrawPolylinesBox, 3, 0, 1, 2);
-
-    QGroupBox * polylineDrawModeGroup = new QGroupBox("Draw polylines", m_displaySubdomainsBox);
+    QGroupBox * polylineDrawModeGroup = new QGroupBox("Draw polylines");
     polylineDrawModeGroup->setCheckable(true);
     polylineDrawModeGroup->setChecked(false);
-    segIGridKayout->addWidget(polylineDrawModeGroup, 4, 0, 2, 2);
+    drawGroupLayout->addWidget(polylineDrawModeGroup);
 
     QVBoxLayout * polylineDrawModeGroupLayout = new QVBoxLayout(polylineDrawModeGroup);
     QRadioButton * linearModeRadio = new QRadioButton("Linear");
@@ -131,21 +149,7 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     polylineDrawModeGroupLayout->addWidget(CRModeRadio);
 
 
-
-
-    segIVLayout->addLayout(segIGridKayout);
-
-    segIVLayout->addStretch(0);
-
-    connect(discardIPushButton,    SIGNAL(clicked()),         this, SLOT(discardAll()));
-    connect(selectIPushButton,     SIGNAL(clicked()),         this, SLOT(selectAll()));
-    connect(meshDrawModeGroup,     SIGNAL(clicked(bool)),     this, SLOT(setDrawMesh(bool)));
-    connect(triangleModeRadio,     SIGNAL(clicked(bool)),     this, SLOT(setMeshModeTriangles(bool)));
-    connect(tetrahedralModeRadio,  SIGNAL(clicked(bool)),     this, SLOT(setMeshModeTetrahedral(bool)));
-    connect(setDrawVerticesBox,    SIGNAL(stateChanged(int)), this, SLOT(setDrawVertices(int)));
-    connect(polylineDrawModeGroup, SIGNAL(clicked(bool)),     this, SLOT(setDrawPolylines(bool)));
-    connect(linearModeRadio,       SIGNAL(clicked(bool)),     this, SLOT(setPolylineModeLinear(bool)));
-    connect(CRModeRadio,           SIGNAL(clicked(bool)),     this, SLOT(setPolylineModeSmooth(bool)));
+    // === Connections ===
 
 
     connect(m_viewer,SIGNAL(setMaxCutPlanes(int,int,int)), this, SLOT(setMaxCutPlanes(int,int,int)));
@@ -161,11 +165,21 @@ void MorphoTetraDocWidget::setSubdomainsElement(QVBoxLayout * contentLayout){
     connect(displayYCut,SIGNAL(toggled(bool)), m_viewer, SLOT(setYCutDisplay(bool)));
     connect(displayZCut,SIGNAL(toggled(bool)), m_viewer, SLOT(setZCutDisplay(bool)));
 
-
+    connect(discardIPushButton,    SIGNAL(clicked()),         this,     SLOT(discardAll()));
+    connect(selectIPushButton,     SIGNAL(clicked()),         this,     SLOT(selectAll()));
     connect(m_viewer, SIGNAL(setMeshSubdomains()), this, SLOT(setMeshSubDomains()));
-    contentLayout->addWidget(m_displaySubdomainsBox);
 
-    contentLayout->addStretch(0);
+    connect(flatShadingCheckBox,       SIGNAL(toggled(bool)),     m_viewer, SLOT(setFlatShading(bool)));
+    connect(wireDrawModeGroup,         SIGNAL(clicked(bool)),     this,     SLOT(setDrawWire(bool)));
+    connect(wireTriangleModeRadio,     SIGNAL(clicked(bool)),     this,     SLOT(setWireModeTriangles(bool)));
+    connect(wireTetrahedralModeRadio,  SIGNAL(clicked(bool)),     this,     SLOT(setWireModeTetrahedral(bool)));
+    connect(meshDrawModeGroup,         SIGNAL(clicked(bool)),     this,     SLOT(setDrawMesh(bool)));
+    connect(triangleModeRadio,         SIGNAL(clicked(bool)),     this,     SLOT(setMeshModeTriangles(bool)));
+    connect(tetrahedralModeRadio,      SIGNAL(clicked(bool)),     this,     SLOT(setMeshModeTetrahedral(bool)));
+    connect(setDrawVerticesBox,        SIGNAL(stateChanged(int)), this,     SLOT(setDrawVertices(int)));
+    connect(polylineDrawModeGroup,     SIGNAL(clicked(bool)),     this,     SLOT(setDrawPolylines(bool)));
+    connect(linearModeRadio,           SIGNAL(clicked(bool)),     this,     SLOT(setPolylineModeLinear(bool)));
+    connect(CRModeRadio,               SIGNAL(clicked(bool)),     this,     SLOT(setPolylineModeSmooth(bool)));
 }
 
 
@@ -218,8 +232,6 @@ void MorphoTetraDocWidget::addMeshSubDomains(const std::map<Subdomain_index, QCo
     }
 
     connect(m_signalIMapper,SIGNAL(mappedInt(int)), this, SLOT(setVisibility(int)));
-    m_displaySubdomainsBox->adjustSize();
-
 }
 
 void MorphoTetraDocWidget::setVisibility(int i){
@@ -258,6 +270,22 @@ void MorphoTetraDocWidget::setMeshModeTriangles(bool state) {
 void MorphoTetraDocWidget::setMeshModeTetrahedral(bool state) {
     if (state) {
         m_viewer->setMeshDrawMode(1);
+    }
+}
+
+void MorphoTetraDocWidget::setDrawWire(bool state) {
+    m_viewer->setDrawWire(state);
+}
+
+void MorphoTetraDocWidget::setWireModeTriangles(bool state) {
+    if (state) {
+        m_viewer->setWireDrawMode(0);
+    }
+}
+
+void MorphoTetraDocWidget::setWireModeTetrahedral(bool state) {
+    if (state) {
+        m_viewer->setWireDrawMode(1);
     }
 }
 

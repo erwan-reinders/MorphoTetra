@@ -25,10 +25,11 @@ SOURCES += MultiMeshViewer.cpp \
     MainWindow.cpp \
     MeshModel.cpp \
     MorphoTetraDocWidget.cpp \
+    Topdockwidget.cpp \
+    PlayerDocWidget.cpp
     #Window.cpp \
     #MeshViewer.cpp \
- \    #DisplayDockWidget.cpp
-    PlayerDocWidget.cpp
+    #DisplayDockWidget.cpp \
 
 HEADERS += CGAL/cgal_headers.h \
     CGAL/Tetrahedron.h \
@@ -40,9 +41,10 @@ HEADERS += CGAL/cgal_headers.h \
     MorphoTetraDocWidget.h \
     MultiMeshViewer.h \
     MainWindow.h \
+    Topdockwidget.h \
     PlayerDocWidget.h
-    #MeshViewer.h \
     #Window.h \
+    #MeshViewer.h \
     #DisplayDockWidget.h \
 
 

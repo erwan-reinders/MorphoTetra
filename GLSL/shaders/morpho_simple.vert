@@ -15,6 +15,8 @@ uniform vec3 clippingNormal;
 uniform vec3 cut;
 uniform vec3 cutDirection;
 
+//uniform bool solid; //unused
+
 out vec3 color;
 out float visibility;
 
@@ -26,16 +28,15 @@ vec3 computeColor(int dim){
 }
 
 float ComputeVisibility(vec3 point){
+    float xVis = visibility_checkX ? (point.x - cut.x)*cutDirection.x : 1.0f;
+    float yVis = visibility_checkY ? (point.y - cut.y)*cutDirection.y : 1.0f;
+    float zVis = visibility_checkZ ? (point.z - cut.z)*cutDirection.z : 1.0f;
 
-        float xVis = visibility_checkX ? (point.x - cut.x)*cutDirection.x : 1.0f;
-        float yVis = visibility_checkY ? (point.y - cut.y)*cutDirection.y : 1.0f;
-        float zVis = visibility_checkZ ? (point.z - cut.z)*cutDirection.z : 1.0f;
-
-        vec3 pos = point - clippingPoint;
-        float vis = dot( clippingNormal, pos );
-        if( vis < 0. || xVis < 0.|| yVis < 0.|| zVis < 0. )
-                return 1000.;
-        else return 0.;
+    vec3 pos = point - clippingPoint;
+    float vis = dot( clippingNormal, pos );
+    if( vis < 0. || xVis < 0.|| yVis < 0.|| zVis < 0. )
+            return 1000.;
+    else return 0.;
 }
 
 void main(void){

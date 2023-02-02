@@ -3,6 +3,8 @@
 in vec3 color;
 in float visibility;
 
+uniform bool u_flat_shading = false;
+
 
 out vec4 FragColor;
 

@@ -10,8 +10,11 @@ MainWindow::MainWindow(){
     m_OptionDocWidget = new MorphoTetraDocWidget(m_viewer,this);
     this->addDockWidget(Qt::RightDockWidgetArea, m_OptionDocWidget);
 
+//    m_TopDockWidget = new TopDockWidget(m_viewer, this);
+//    this->addDockWidget(Qt::RightDockWidgetArea, m_TopDockWidget);
+
     m_PlayerDocWidget = new PlayerDocWidget(m_viewer,this);
-    this->addDockWidget(Qt::BottomDockWidgetArea, m_PlayerDocWidget);
+    this->addDockWidget(Qt::RightDockWidgetArea, m_PlayerDocWidget);
 
     //Connect sliders for the video
     connect(m_PlayerDocWidget, SIGNAL(doubleValueChanged(double)), m_viewer, SLOT(onPlayerValueChanged(double)));

@@ -29,9 +29,13 @@ private :
     bool m_drawWireFrame;
     bool m_drawMesh;
     int  m_meshDrawMode;
+    bool m_drawWire;
+    int  m_wireDrawMode;
     bool m_drawPoints;
     bool m_drawPolylines;
     int  m_polylineDrawMode;
+
+    bool m_flat_shading;
 
     const int m_wantedDeltaTime = 33;
 
@@ -47,6 +51,8 @@ public:
     void setVisibility(unsigned int i, bool visibility);
     void setDrawMesh(bool state);
     void setMeshDrawMode(int mode);
+    void setDrawWire(bool state);
+    void setWireDrawMode(int mode);
     void setDrawVertices(int state);
     void setDrawPolylines(int state);
     void setPolylineDrawMode(int mode);
@@ -96,6 +102,8 @@ public slots :
     void setXCutDisplay(bool state);
     void setYCutDisplay(bool state);
     void setZCutDisplay(bool state);
+
+    void setFlatShading(bool state);
 signals:
    void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
    void setMeshSubdomains();

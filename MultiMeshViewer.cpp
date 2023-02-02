@@ -28,10 +28,16 @@ MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
 
     loadedData = false;
 
-    m_drawWireFrame= false;
-    m_drawMesh= true;
-    m_drawPoints= false;
-    m_drawPolylines = false;
+    m_drawWireFrame    = false;
+    m_drawMesh         = true;
+    m_meshDrawMode     = 0;
+    m_drawWire         = false;
+    m_wireDrawMode     = 0;
+    m_drawPoints       = false;
+    m_drawPolylines    = false;
+    m_polylineDrawMode = 0;
+
+    m_flat_shading = false;
 
     m_cutPlaneActiveX =  false;
     m_cutPlaneActiveY =  false;
@@ -97,6 +103,13 @@ void MultiMeshViewer::initMatrix(ShaderProgram & program){
                 program.glFunctions->glGetUniformLocation(program.programID, "cutDirection")
                 ,m_cutDirection[0], m_cutDirection[1], m_cutDirection[2]);
 
+    program.glFunctions->glUniform1i(
+                program.glFunctions->glGetUniformLocation(program.programID, "u_flat_shading")
+                ,m_flat_shading);
+
+    program.glFunctions->glUniform1i(
+                program.glFunctions->glGetUniformLocation(program.programID, "solid")
+                ,false);
 }
 
 void MultiMeshViewer::compileRenderingPrograms(){
@@ -140,16 +153,28 @@ void MultiMeshViewer::setVisibility(unsigned int i, bool visibility){
     update();
 }
 
+
 void MultiMeshViewer::setDrawMesh(bool state) {
     m_drawMesh = state;
     update();
 }
 
-
 void MultiMeshViewer::setMeshDrawMode(int mode) {
     m_meshDrawMode = mode;
     update();
 }
+
+
+void MultiMeshViewer::setDrawWire(bool state) {
+    m_drawWire = state;
+    update();
+}
+
+void MultiMeshViewer::setWireDrawMode(int mode) {
+    m_wireDrawMode = mode;
+    update();
+}
+
 
 void MultiMeshViewer::setDrawVertices(int state) {
     m_drawPoints = state;
@@ -194,14 +219,23 @@ void MultiMeshViewer::draw(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 
     if(m_drawMesh){
         mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
         initMatrix(mesh_glProgram);
-        //glEnable(GL_DEPTH_TEST);
         m_meshes[m_curModel].drawMesh(mesh_glProgram,m_displayMap,m_colorMap,m_meshDrawMode);
+    }
+
+    if (m_drawWire) {
+        mesh_glProgram.glFunctions->glUseProgram(mesh_glProgram.programID);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        initMatrix(mesh_glProgram);
+        mesh_glProgram.glFunctions->glUniform1i(
+                    mesh_glProgram.glFunctions->glGetUniformLocation(mesh_glProgram.programID, "solid")
+                    ,true);
+        glLineWidth(1.0f);
+        m_meshes[m_curModel].drawMesh(mesh_glProgram,m_displayMap,m_colorMap,m_wireDrawMode);
     }
 
     if(m_drawPolylines){
@@ -418,5 +452,10 @@ void MultiMeshViewer::setYCutDisplay(bool state) {
 
 void MultiMeshViewer::setZCutDisplay(bool state) {
     m_cutPlaneActiveZ = state;
+    update();
+}
+
+void MultiMeshViewer::setFlatShading(bool state) {
+    m_flat_shading = state;
     update();
 }

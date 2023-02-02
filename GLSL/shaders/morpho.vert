@@ -16,6 +16,7 @@ uniform vec3 cut;
 uniform vec3 cutDirection;
 
 out vec3 normal;
+out vec3 flat_normal;
 out vec3 position;
 out float visibility;
 
@@ -35,6 +36,7 @@ float ComputeVisibility(vec3 point){
 void main(void){
 
     normal = i_normal;
+    flat_normal = i_normal;
     position = i_position;
     gl_Position = proj_matrix * mv_matrix * vec4(position,1.0);
     visibility = ComputeVisibility(i_position);
