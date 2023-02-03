@@ -20,12 +20,13 @@ TEMPLATE = app
 MOC_DIR = ./moc
 OBJECTS_DIR = ./obj
 
-SOURCES += MultiMeshViewer.cpp \
+SOURCES += CGAL/cgal_basicfunctions.cpp \
+    MultiMeshViewer.cpp \
     Main.cpp \
     MainWindow.cpp \
     MeshModel.cpp \
     MorphoTetraDocWidget.cpp \
-    Topdockwidget.cpp \
+    RemeshingDockWidget.cpp \
     PlayerDocWidget.cpp
     #Window.cpp \
     #MeshViewer.cpp \
@@ -41,7 +42,7 @@ HEADERS += CGAL/cgal_headers.h \
     MorphoTetraDocWidget.h \
     MultiMeshViewer.h \
     MainWindow.h \
-    Topdockwidget.h \
+    RemeshingDockWidget.h \
     PlayerDocWidget.h
     #Window.h \
     #MeshViewer.h \

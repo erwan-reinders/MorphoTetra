@@ -16,6 +16,8 @@
 #include <map>
 #include <QColor>
 
+#include <CGAL/Labeled_mesh_domain_3.h>
+
 #define DEBUGAPP true
 
 class MeshModel{
@@ -85,7 +87,14 @@ public:
     MeshModel();
     virtual ~MeshModel();
 
-    void initFromFile(QString filename);
+    void initFromFile(QString filename,
+                      double facetAngle,
+                      double facetSize,
+                      double facetApproximation,
+                      double cellRatio,
+                      double cellSize,
+                      bool perturb,
+                      bool exude);
     void initWithRemeshing(QString filename);
 
     void initDrawingBuffers(ShaderProgram& renderingProgram);

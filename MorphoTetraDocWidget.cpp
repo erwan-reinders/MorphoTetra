@@ -11,7 +11,7 @@ MorphoTetraDocWidget::MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * 
 
 MorphoTetraDocWidget::~MorphoTetraDocWidget(){}
 
-void MorphoTetraDocWidget::setSubdomainsElement(QLayout * contentLayout){
+void MorphoTetraDocWidget::setSubdomainsElement(QBoxLayout * contentLayout){
 
     // === Cutting plane ===
 
@@ -62,6 +62,8 @@ void MorphoTetraDocWidget::setSubdomainsElement(QLayout * contentLayout){
     QCheckBox * displayZCut = new QCheckBox("display", planeGroupBox);
     cuttingPlaneGridLayout->addWidget(displayZCut, 4, 1, 1, 1);
 
+    contentLayout->addStretch(0);
+
 
     // === Labels Diplay ===
 
@@ -91,6 +93,8 @@ void MorphoTetraDocWidget::setSubdomainsElement(QLayout * contentLayout){
 
     QPushButton *discardIPushButton = new QPushButton("Discard All", m_displaySubdomainsBox);
     segIGridKayout->addWidget(discardIPushButton, 0, 1, 1, 1);
+
+    contentLayout->addStretch(0);
 
 
     // === Draw checkboxes ===

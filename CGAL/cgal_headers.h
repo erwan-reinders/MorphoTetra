@@ -33,6 +33,9 @@ typedef CGAL::Sequential_tag Concurrency_tag;
 
 // Triangulation
 typedef CGAL::Mesh_triangulation_3<Mesh_domain,CGAL::Default,Concurrency_tag>::type Tr;
+typedef Tr::Finite_facets_iterator      Finite_facets_iterator;
+typedef Tr::Finite_vertices_iterator    Finite_vertices_iterator;
+typedef Tr::Finite_cells_iterator       Finite_cells_iterator;
 
 typedef CGAL::Mesh_complex_3_in_triangulation_3<Tr> C3t3;
 

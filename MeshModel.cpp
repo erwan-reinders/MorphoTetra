@@ -1,12 +1,7 @@
 #include "MeshModel.h"
-//#include "QGLViewer/manipulatedFrame.h"
-
-#include "Math_utilitiesfnc.h"
-
-#include <CGAL/Labeled_mesh_domain_3.h>
-
 
 #include "CGAL/cgal_basicfunctions.h"
+#include "Math_utilitiesfnc.h"
 
 MeshModel::MeshModel(){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
@@ -25,14 +20,23 @@ bool MeshModel::initialized() {
     return m_glslInitialised;
 }
 
-void MeshModel::initFromFile(QString filename) {
+void MeshModel::initFromFile(QString filename,
+                             double facetAngle,
+                             double facetSize,
+                             double facetApproximation,
+                             double cellRatio,
+                             double cellSize,
+                             bool perturb,
+                             bool exude) {
     C3t3 m_c3t3;
-    getC3t3FromFile(filename, m_c3t3);
+    getC3t3FromFile(filename, m_c3t3,
+                    facetAngle, facetSize, facetApproximation, cellRatio, cellSize, perturb, exude);
 
     initMeshData(m_c3t3);
 }
 
 void MeshModel::initWithRemeshing(QString filename) {
+    std::cerr << "initWithRemeshing : NOT IMPLEMENTED" << std::endl;
     C3t3 m_c3t3;
     getC3t3FromFile(filename, m_c3t3);
 
@@ -633,23 +637,15 @@ void MeshModel::drawMeshTetra(ShaderProgram& renderingProgram,std::map<Subdomain
                 int te = it->second[tetr];
                 Tetrahedron t = m_tetrahedra[te];
 
-//                qglviewer::Vec center = qglviewer::Vec(0.0, 0.0, 0.0);
-//                for(int i = 0; i<4;i++){
-//                    center = center + m_vertices[t[i]];
-//                }
-//                center = 0.25 * center;
-
                 for(int i = 0; i<4;i++){
 
                     qglviewer::Vec e01 = m_vertices[t[indices[i][1]]] - m_vertices[t[indices[i][0]]];
                     qglviewer::Vec e02 = m_vertices[t[indices[i][2]]] - m_vertices[t[indices[i][0]]];
-                    qglviewer::Vec normal = e01 ^ e02;
+                    qglviewer::Vec normal = e02 ^ e01;
                     normal.normalize();
 
                     for (int j = 0; j < 3; j++) {
                         drawIndex.push_back(t[indices[i][j]]);
-
-//                        qglviewer::Vec normal = m_vertices[t[indices[i][j]]] - center;
 
                         drawNormals[t[i]*3]   += normal[0];
                         drawNormals[t[i]*3+1] += normal[1];

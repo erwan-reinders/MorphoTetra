@@ -35,7 +35,7 @@ private :
     QSlider * zHSlider;
 
 protected :
-    void setSubdomainsElement(QLayout * contentLayout);
+    void setSubdomainsElement(QBoxLayout * contentLayout);
 
 public:
     MorphoTetraDocWidget(MultiMeshViewer * _viewer, QWidget * parent );

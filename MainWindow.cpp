@@ -10,9 +10,6 @@ MainWindow::MainWindow(){
     m_OptionDocWidget = new MorphoTetraDocWidget(m_viewer,this);
     this->addDockWidget(Qt::RightDockWidgetArea, m_OptionDocWidget);
 
-//    m_TopDockWidget = new TopDockWidget(m_viewer, this);
-//    this->addDockWidget(Qt::RightDockWidgetArea, m_TopDockWidget);
-
     m_PlayerDocWidget = new PlayerDocWidget(m_viewer,this);
     this->addDockWidget(Qt::RightDockWidgetArea, m_PlayerDocWidget);
 
@@ -24,17 +21,23 @@ MainWindow::MainWindow(){
     connect(m_viewer, SIGNAL(pausePlayer()), m_PlayerDocWidget, SLOT(pauseAction()));
 
     //For the menu
-    QAction * actionLoadTetraFolder = new QAction("Load Folder datas", this);
+    QMenuBar * menubar = new QMenuBar(this);
+    this->setMenuBar(menubar);
+
     QMenu * menuFile = new QMenu("File", this);
+    menubar->addAction(menuFile->menuAction());
+
+    QAction * actionLoadTetraFolder = new QAction("Load Folder datas", this);
     menuFile->addAction(actionLoadTetraFolder);
     connect(actionLoadTetraFolder, SIGNAL(triggered()), this, SLOT(openTetraFolder()));
 
-    QMenuBar * menubar = new QMenuBar(this);
-    menubar->addAction(menuFile->menuAction());
-    this->setMenuBar(menubar);
+    QAction * actionLoadInr = new QAction("Load inr", this);
+    menuFile->addAction(actionLoadInr);
+    connect(actionLoadInr, SIGNAL(triggered()), this, SLOT(openInr()));
+
+
     QStatusBar *statusbar = new QStatusBar(this);
     this->setStatusBar(statusbar);
-
 
     m_PlayerDocWidget->setVisible(true);
     m_OptionDocWidget->setVisible(true);
@@ -51,16 +54,19 @@ void MainWindow::initViewerDockWidgets(MultiMeshViewer* m_viewer){
 
     mesherWidget->setLayout(mesherLayout);
 
-    QGroupBox * viewerGroupBox = new QGroupBox("Viewer");
+//    QGroupBox * viewerGroupBox = new QGroupBox("Viewer");
+//    QGridLayout * gridLayout = new QGridLayout(viewerGroupBox);
+//    gridLayout->setObjectName("gridLayout");
+//    gridLayout->addWidget(mesherWidget, 0, 1, 1, 1);
+//    viewerGroupBox->setLayout(gridLayout);
 
-    QGridLayout * gridLayout = new QGridLayout(viewerGroupBox);
-    gridLayout->setObjectName("gridLayout");
+    this->setCentralWidget(mesherWidget);
+}
 
-    gridLayout->addWidget(mesherWidget, 0, 1, 1, 1);
-
-    viewerGroupBox->setLayout(gridLayout);
-
-    this->setCentralWidget(viewerGroupBox);
+void MainWindow::openRemeshingDockWidget(QString filePath)
+{
+    m_RemeshingDockWidget = new RemeshingDockWidget(m_viewer, filePath, statusBar(), this);
+    this->addDockWidget(Qt::TopDockWidgetArea, m_RemeshingDockWidget);
 }
 
 
@@ -72,12 +78,33 @@ void MainWindow::openTetraFolder(){
 
     int res = dialog.exec();
 
-    QDir directorySelected;
     if(res){
-        directorySelected = dialog.selectedFiles()[0];
-        QStringList fileList = directorySelected.entryList(QDir::Files);
+        QStringList directoryNames = dialog.selectedFiles();
+        QStringList fileNames;
+        foreach (QString directoryName, directoryNames) {
+            QDir directorySelected = directoryName;
+            QStringList fileList = directorySelected.entryList(QDir::Files);
+            foreach (QString fileName, fileList) {
+                fileNames.append(directorySelected.absoluteFilePath(fileName));
+            }
+        }
 
-        m_viewer->loadMeshes(statusBar(), fileList, directorySelected);
+        m_viewer->loadMeshes(statusBar(), fileNames);
+    }
+}
 
+void MainWindow::openInr() {
+    QFileDialog dialog(this);
+    dialog.setNameFilter("3D Image (*.inr)");
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    //dialog.selectMimeTypeFilter(".inr");
+
+    if(dialog.exec()){
+        QStringList fileNames = dialog.selectedFiles();
+
+        m_viewer->loadMeshes(statusBar(), fileNames);
+
+        openRemeshingDockWidget(fileNames[0]);
     }
 }

@@ -8,6 +8,11 @@
 #include <QStatusBar>
 #include <QDir>
 
+#include <QGLViewer/manipulatedFrame.h>
+#include "GLSL/glsl_basicfunctions.h"
+#include "CGAL/cgal_basicfunctions.h"
+#include <utility>
+
 class MultiMeshViewer: public QGLViewer{
     Q_OBJECT
 
@@ -57,7 +62,15 @@ public:
     void setDrawPolylines(int state);
     void setPolylineDrawMode(int mode);
 
-    void loadMeshes(QStatusBar *statusbar,QStringList filenames, QDir& directorySelected);
+    void loadMeshes(QStatusBar *statusbar,QStringList filenames);
+    void loadMeshes(QStatusBar *statusbar,QStringList filenames,
+                    double facetAngle,
+                    double facetSize,
+                    double facetApproximation,
+                    double cellRatio,
+                    double cellSize,
+                    bool perturb,
+                    bool exude);
 
     std::map<Subdomain_index, QColor> getColorMap(){return m_colorMap;}
     const std::map<Subdomain_index, QColor> getColorMap()const {return m_colorMap;}

@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "MorphoTetraDocWidget.h"
-#include "Topdockwidget.h"
+#include "RemeshingDockWidget.h"
 #include "PlayerDocWidget.h"
 #include <QGroupBox>
 #include <QGridLayout>
@@ -21,15 +21,18 @@ private :
 
     MultiMeshViewer *           m_viewer;
     MorphoTetraDocWidget *      m_OptionDocWidget;
-    TopDockWidget*              m_TopDockWidget;
+    RemeshingDockWidget*        m_RemeshingDockWidget;
     PlayerDocWidget *           m_PlayerDocWidget;
 
     QDockWidget *               mesherDockWidget;
 
     void initViewerDockWidgets(MultiMeshViewer* m_viewer);
 
+    void openRemeshingDockWidget(QString filePath);
+
  public slots:
     void openTetraFolder();
+    void openInr();
 };
 
 #endif // MAINWINDOW_H

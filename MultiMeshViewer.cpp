@@ -1,7 +1,6 @@
 #include "MultiMeshViewer.h"
-#include <QGLViewer/manipulatedFrame.h>
-#include "GLSL/glsl_basicfunctions.h"
-#include <utility>
+
+#include <QCoreApplication>
 
 MultiMeshViewer::MultiMeshViewer(QWidget *parent) : QGLViewer(parent){
     //m_meshes.push_back(MeshModel("data/out.mesh"));
@@ -363,27 +362,31 @@ void MultiMeshViewer::computeRandomColors(const std::vector<int> & subdomain_ind
 }
 
 
-void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,  QDir& directorySelected){
+
+void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames) {
+    loadMeshes(statusbar, filenames, FACET_ANGLE, FACET_SIZE, FACET_APPROXIMATION, CELL_RATIO, CELL_SIZE, false, false);
+}
+void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,
+                                 double facetAngle,
+                                 double facetSize,
+                                 double facetApproximation,
+                                 double cellRatio,
+                                 double cellSize,
+                                 bool perturb,
+                                 bool exude){
     m_meshes.clear();
     QString filename;
-    int i = 0;
     foreach (filename, filenames) {
-        QString file = directorySelected.absoluteFilePath(filename);
 
-        statusbar->showMessage("Opening tetra mesh : " + file);
-        update();
+        statusbar->showMessage("Opening tetra mesh : " + filename);
+        QCoreApplication::processEvents();
 
         m_meshes.push_back(MeshModel());
-        if (i%2 == 0) {
-            m_meshes[m_meshes.size()-1].initFromFile(file);
-        }
-        else {
-            m_meshes[m_meshes.size()-1].initWithRemeshing(file);
-        }
-        i++;
+        m_meshes[m_meshes.size()-1].initFromFile(filename,
+            facetAngle, facetSize, facetApproximation, cellRatio, cellSize, perturb, exude);
 
         statusbar->showMessage("Tetra mesh opened !");
-        update();
+        QCoreApplication::processEvents();
     }
 
 
