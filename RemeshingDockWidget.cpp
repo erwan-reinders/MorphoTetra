@@ -36,16 +36,24 @@ RemeshingDockWidget::RemeshingDockWidget(MultiMeshViewer* _viewer, QString fileP
     m_facetSizeNumber                = new QDoubleSpinBox(facetCriteriaGroup);
     QLabel * facetApproximationLabel = new QLabel("Facet approximation");
     m_facetApproximationNumber       = new QDoubleSpinBox(facetCriteriaGroup);
+    QLabel * facetTopologyLabel      = new QLabel("Facet topology");
+    m_facetTopologyBox               = new QComboBox(facetCriteriaGroup);
     m_facetAngleNumber->setValue(DETAILED_FACET_ANGLE);
     m_facetAngleNumber->setMaximum(30);
     m_facetSizeNumber->setValue(DETAILED_FACET_SIZE);
     m_facetApproximationNumber->setValue(DETAILED_FACET_APPROXIMATION);
+    m_facetTopologyBox->addItem("Facet on surface", CGAL::FACET_VERTICES_ON_SURFACE);
+    m_facetTopologyBox->addItem("Facet on same surface", CGAL::FACET_VERTICES_ON_SAME_SURFACE_PATCH);
+    m_facetTopologyBox->addItem("Facet on same surface with adjacency", CGAL::FACET_VERTICES_ON_SAME_SURFACE_PATCH_WITH_ADJACENCY_CHECK);
+    //m_facetTopologyBox->setCurrentIndex(0);
     facetFormLayout->setWidget(0, QFormLayout::LabelRole, facetAngleLabel);
     facetFormLayout->setWidget(0, QFormLayout::FieldRole, m_facetAngleNumber);
     facetFormLayout->setWidget(1, QFormLayout::LabelRole, facetSizeLabel);
     facetFormLayout->setWidget(1, QFormLayout::FieldRole, m_facetSizeNumber);
     facetFormLayout->setWidget(2, QFormLayout::LabelRole, facetApproximationLabel);
     facetFormLayout->setWidget(2, QFormLayout::FieldRole, m_facetApproximationNumber);
+    facetFormLayout->setWidget(3, QFormLayout::LabelRole, facetTopologyLabel);
+    facetFormLayout->setWidget(3, QFormLayout::FieldRole, m_facetTopologyBox);
 
     QGroupBox * optimizationGroup = new QGroupBox("Optimizations");
     layout->addWidget(optimizationGroup);
@@ -74,6 +82,7 @@ void RemeshingDockWidget::remesh() {
                          m_facetAngleNumber->value(),
                          m_facetSizeNumber->value(),
                          m_facetApproximationNumber->value(),
+                         m_facetTopologyBox->currentData().value<CGAL::Mesh_facet_topology>(),
                          m_cellRatioNumber->value(),
                          m_cellSizeNumber->value(),
                          m_perturbOption->isChecked(),

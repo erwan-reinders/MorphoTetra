@@ -13,7 +13,7 @@
 
 #define FACET_ANGLE 30.
 #define FACET_SIZE 10.
-#define FACET_APPROXIMATION 1.
+#define FACET_APPROXIMATION 5.
 
 
 #define DETAILED_CELL_RATIO 3.
@@ -27,7 +27,7 @@
 #define CRUDE_CELL_RATIO 50.
 #define CRUDE_CELL_SIZE 50.
 
-#define CRUDE_FACET_ANGLE 0.
+#define CRUDE_FACET_ANGLE 1.
 #define CRUDE_FACET_SIZE 50.
 #define CRUDE_FACET_APPROXIMATION 50.
 
@@ -56,21 +56,27 @@ void getTetrahedronAndMap(const C3t3 c3t3,const Tr t, std::map<Vertex_handle, in
 void getC3t3FromMeshFile(const char* filename, C3t3 & m_c3t3);
 
 void getC3t3FromInrFile(const char* filename, C3t3 & m_c3t3,
-                        double facetAngle = FACET_ANGLE,
-                        double facetSize = FACET_SIZE,
-                        double facetApproximation = FACET_APPROXIMATION,
-                        double cellRatio = CELL_RATIO,
-                        double cellSize = CELL_SIZE,
-                        bool perturb = false,
-                        bool exude = false);
+                        double facetAngle,
+                        double facetSize,
+                        double facetApproximation,
+                        CGAL::Mesh_facet_topology facetTopology,
+                        double cellRatio,
+                        double cellSize,
+                        bool perturb,
+                        bool exude,
+                        float smoothingSigma);
+
+CGAL::Labeled_mesh_domain_3<K> getDomain(CGAL::Image_3 image, float smoothingSigma);
 
 void getC3t3FromFile(QString filename, C3t3 & m_c3t3,
                      double facetAngle = FACET_ANGLE,
                      double facetSize = FACET_SIZE,
                      double facetApproximation = FACET_APPROXIMATION,
+                     CGAL::Mesh_facet_topology facetTopology = CGAL::FACET_VERTICES_ON_SURFACE,
                      double cellRatio = CELL_RATIO,
                      double cellSize = CELL_SIZE,
                      bool perturb = false,
-                     bool exude = false);
+                     bool exude = false,
+                     float smoothingSigma = -1.0);
 
 #endif // CGAL_BASICFUNCTIONS_H

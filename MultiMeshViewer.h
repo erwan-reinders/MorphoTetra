@@ -67,6 +67,7 @@ public:
                     double facetAngle,
                     double facetSize,
                     double facetApproximation,
+                    CGAL::Mesh_facet_topology facetTopology,
                     double cellRatio,
                     double cellSize,
                     bool perturb,

@@ -24,13 +24,14 @@ void MeshModel::initFromFile(QString filename,
                              double facetAngle,
                              double facetSize,
                              double facetApproximation,
+                             CGAL::Mesh_facet_topology facetTopology,
                              double cellRatio,
                              double cellSize,
                              bool perturb,
                              bool exude) {
     C3t3 m_c3t3;
     getC3t3FromFile(filename, m_c3t3,
-                    facetAngle, facetSize, facetApproximation, cellRatio, cellSize, perturb, exude);
+                    facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude);
 
     initMeshData(m_c3t3);
 }

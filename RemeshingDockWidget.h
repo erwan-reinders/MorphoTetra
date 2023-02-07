@@ -11,6 +11,7 @@
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QCheckBox>
+#include <QComboBox>
 
 
 class RemeshingDockWidget : public QDockWidget
@@ -26,6 +27,7 @@ private:
     QDoubleSpinBox *    m_facetAngleNumber;
     QDoubleSpinBox *    m_facetSizeNumber;
     QDoubleSpinBox *    m_facetApproximationNumber;
+    QComboBox *         m_facetTopologyBox;
     QCheckBox *         m_perturbOption;
     QCheckBox *         m_exudeOption;
 

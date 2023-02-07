@@ -384,40 +384,68 @@ void getC3t3FromInrFile(const char* filename, C3t3 & m_c3t3,
                         double facetAngle,
                         double facetSize,
                         double facetApproximation,
+                        CGAL::Mesh_facet_topology facetTopology,
                         double cellRatio,
                         double cellSize,
                         bool perturb,
-                        bool exude) {
+                        bool exude,
+                        float smoothingSigma) {
+    if (DEBUGAPP) {
+        std::cout << "MESHING : " << filename << std::endl;
+        std::cout << "facetAngle = " << facetAngle << std::endl;
+        std::cout << "facetSize = " << facetSize << std::endl;
+        std::cout << "facetApproximation = " << facetApproximation << std::endl;
+        std::cout << "facetTopology = " << facetTopology << std::endl;
+        std::cout << "cellRatio = " << cellRatio << std::endl;
+        std::cout << "cellSize = " << cellSize << std::endl;
+        std::cout << "perturb = " << perturb << std::endl;
+        std::cout << "exude = " << exude << std::endl;
+        std::cout << "smoothingSigma = " << smoothingSigma << std::endl;
+    }
+
     CGAL::Image_3 image;
     image.read(filename);
 
-    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);        // Domain
+    // Domain
+    CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);
 
     // Mesh criteria
     //Mesh_criteria::Edge_criteria edge_criteria(6);
-    Mesh_criteria::Facet_criteria facet_criteria(facetAngle, facetSize, facetApproximation); // angle, size, approximation
-    Mesh_criteria::Cell_criteria cell_criteria(cellRatio, cellSize);        // radius-edge ratio, size
+    Mesh_criteria::Facet_criteria facet_criteria(facetAngle, facetSize, facetApproximation, facetTopology);
+    Mesh_criteria::Cell_criteria cell_criteria(cellRatio, cellSize);
     Mesh_criteria criteria(facet_criteria, cell_criteria);
 
     // Meshing
     CGAL::parameters::internal::Exude_options exudeOption = exude ? CGAL::parameters::exude() : CGAL::parameters::no_exude();
     CGAL::parameters::internal::Perturb_options perturbOption = perturb ? CGAL::parameters::perturb() : CGAL::parameters::no_perturb();
-    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, exudeOption, perturbOption);
+    m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, exudeOption, perturbOption, CGAL::parameters::features(domain));
+}
+
+CGAL::Labeled_mesh_domain_3<K> getDomain(CGAL::Image_3 image, float smoothingSigma) {
+    if (smoothingSigma > 0) {
+        std::cerr << "NOT YET IMPLEMENTED" << std::endl;
+        return CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);
+    }
+    else {
+        return CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);
+    }
 }
 
 void getC3t3FromFile(QString filename, C3t3 & m_c3t3,
                      double facetAngle,
                      double facetSize,
                      double facetApproximation,
+                     CGAL::Mesh_facet_topology facetTopology,
                      double cellRatio,
                      double cellSize,
                      bool perturb,
-                     bool exude) {
+                     bool exude,
+                     float smoothingSigma) {
     if(filename.endsWith(".mesh")){
         getC3t3FromMeshFile(filename.toStdString().c_str(), m_c3t3);
     }else if (filename.endsWith(".inr")) {
         getC3t3FromInrFile(filename.toStdString().c_str(), m_c3t3,
-                           facetAngle, facetSize, facetApproximation, cellRatio, cellSize, perturb, exude);
+            facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude, smoothingSigma);
     }
 }
 

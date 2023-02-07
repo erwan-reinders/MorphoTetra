@@ -14,6 +14,7 @@ VCPKG_CGAL_P = C:\Users\aclement\Desktop\dev\vcpkg\installed\x64-windows
 #QGLViewer_P  = C:\Users\reind\Desktop\HAI911I_Developpement_Application_interactive\libQGLViewer-2.8.0_faraj
 #QGLViewer_P  = C:\dev\libQGlViewer\libQGLViewer-2.8.0
 QGLViewer_P  = C:\Users\aclement\Desktop\dev\libQGLViewer\libQGLViewer-2.9.1
+#CLEAVER_P    = C:\Users\aclement\Desktop\dev\Cleaver2
 
 TARGET = mophoTetra
 TEMPLATE = app
@@ -28,6 +29,7 @@ SOURCES += CGAL/cgal_basicfunctions.cpp \
     MorphoTetraDocWidget.cpp \
     RemeshingDockWidget.cpp \
     PlayerDocWidget.cpp
+    #CLEAVER/cleaver_basicfunctions.cpp \
     #Window.cpp \
     #MeshViewer.cpp \
     #DisplayDockWidget.cpp \
@@ -44,6 +46,7 @@ HEADERS += CGAL/cgal_headers.h \
     MainWindow.h \
     RemeshingDockWidget.h \
     PlayerDocWidget.h
+    #CLEAVER/cleaver_basicfunctions.h \
     #Window.h \
     #MeshViewer.h \
     #DisplayDockWidget.h \
@@ -72,8 +75,14 @@ LIBS += -L$${VCPKG_CGAL_P}\lib -lgmpxx
 LIBS += -L$${VCPKG_CGAL_P}\lib -lmpfr
 
 
-LIB_DIR = $${QGLViewer_P}\QGLViewer
+#CLEAVER integration
+#INCLUDEPATH += $${CLEAVER_P}\src\lib
+#INCLUDEPATH += $${CLEAVER_P}\src\lib\nrrd2cleaver
+#LIBS += -L$${CLEAVER_P}\build\lib\cleaver -lcleaver
+
+
 #LIBQGLViewer integration
+LIB_DIR = $${QGLViewer_P}\QGLViewer
 win32 {
         # Seems to be needed for Visual Studio with Intel compiler
         DEFINES *= WIN32
