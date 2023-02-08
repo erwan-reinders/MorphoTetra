@@ -55,6 +55,16 @@ RemeshingDockWidget::RemeshingDockWidget(MultiMeshViewer* _viewer, QString fileP
     facetFormLayout->setWidget(3, QFormLayout::LabelRole, facetTopologyLabel);
     facetFormLayout->setWidget(3, QFormLayout::FieldRole, m_facetTopologyBox);
 
+    QGroupBox * edgeCriteriaGroup = new QGroupBox("Edge criteria");
+    layout->addWidget(edgeCriteriaGroup);
+    QFormLayout * edgeFormLayout = new QFormLayout(edgeCriteriaGroup);
+    edgeCriteriaGroup->setLayout(edgeFormLayout);
+    QLabel * edgeSizeLabel  = new QLabel("Edge size");
+    m_edgeSizeNumber        = new QDoubleSpinBox(edgeCriteriaGroup);
+    m_edgeSizeNumber->setValue(DETAILED_EDGE_SIZE);
+    edgeFormLayout->setWidget(0, QFormLayout::LabelRole, edgeSizeLabel);
+    edgeFormLayout->setWidget(0, QFormLayout::FieldRole, m_edgeSizeNumber);
+
     QGroupBox * optimizationGroup = new QGroupBox("Optimizations");
     layout->addWidget(optimizationGroup);
     QFormLayout * optimizationFormLayout = new QFormLayout(optimizationGroup);
@@ -79,6 +89,7 @@ RemeshingDockWidget::RemeshingDockWidget(MultiMeshViewer* _viewer, QString fileP
 
 void RemeshingDockWidget::remesh() {
     m_viewer->loadMeshes(m_statusbar, QStringList(m_filePath),
+                         m_edgeSizeNumber->value(),
                          m_facetAngleNumber->value(),
                          m_facetSizeNumber->value(),
                          m_facetApproximationNumber->value(),

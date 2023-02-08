@@ -1,15 +1,13 @@
 #include "MeshModel.h"
 
-#include "CGAL/cgal_basicfunctions.h"
-#include "Math_utilitiesfnc.h"
 
 MeshModel::MeshModel(){
     if(DEBUGAPP) std::cout << "[Model] construction" << std::endl;
 
     m_smoothPolylineSubdivisionNumber = 8.0f;
     m_verticesBufferPos     = 0;
-    m_dimensionsBufferPos   = 2;
     m_normalsBufferPos      = 1;
+    m_dimensionsBufferPos   = 2;
 
     m_glslInitialised = false;
 }
@@ -20,7 +18,9 @@ bool MeshModel::initialized() {
     return m_glslInitialised;
 }
 
-void MeshModel::initFromFile(QString filename,
+void MeshModel::initFromFile(QStatusBar * statusbar,
+                             QString filename,
+                             double edgeSize,
                              double facetAngle,
                              double facetSize,
                              double facetApproximation,
@@ -30,8 +30,12 @@ void MeshModel::initFromFile(QString filename,
                              bool perturb,
                              bool exude) {
     C3t3 m_c3t3;
+    //testGetPolylineFrom3DImage(filename.toStdString().c_str(), m_imagePolyLines);
     getC3t3FromFile(filename, m_c3t3,
-                    facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude);
+                    edgeSize, facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude);
+
+    statusbar->showMessage("Initializing data...");
+    QCoreApplication::processEvents();
 
     initMeshData(m_c3t3);
 }
@@ -59,6 +63,10 @@ void MeshModel::initDrawingBuffers(ShaderProgram& renderingProgram){
     renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO_smooth_Catmull);
     renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer_smooth_Catmull);
     renderingProgram.glFunctions->glGenBuffers(1, &m_dimensionsBuffer_smooth_Catmull);
+
+    renderingProgram.glFunctions->glGenVertexArrays(1,&m_VAO_imagePolyLines);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_verticesBuffer_imagePolyLines);
+    renderingProgram.glFunctions->glGenBuffers(1, &m_dimensionsBuffer_imagePolyLines);
 }
 
 void MeshModel::initGLSL_vertices(QOpenGLExtraFunctions*  cur_glFunctions){
@@ -151,6 +159,24 @@ void MeshModel::initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions
     drawVertices.clear();
 }
 
+void MeshModel::initGLSL_imagePolyLinesVertices(QOpenGLExtraFunctions*  cur_glFunctions){
+    if(DEBUGAPP) std::cout << "[Model] init GLSL vertices imagePolyLines" << std::endl;
+
+    std::vector<float>  drawVertices;
+    drawVertices.reserve(m_imagePolyLines.size()*3);
+    for(unsigned int i = 0; i<m_imagePolyLines.size(); i++){
+        drawVertices.push_back(m_imagePolyLines[i][0]);
+        drawVertices.push_back(m_imagePolyLines[i][1]);
+        drawVertices.push_back(m_imagePolyLines[i][2]);
+    }
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer_imagePolyLines);
+    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, drawVertices.size() * sizeof(float), &drawVertices[0], GL_STATIC_DRAW);
+    cur_glFunctions->glVertexAttribPointer(m_verticesBufferPos, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    cur_glFunctions->glEnableVertexAttribArray(m_verticesBufferPos);
+    checkOpenGLError();
+    drawVertices.clear();
+}
+
 void MeshModel::initGLSL_CatmullDimensions(QOpenGLExtraFunctions*  cur_glFunctions){
     if(DEBUGAPP) std::cout << "[Model] init GLSL dimensions CATMULL : " << m_verticesSmoothPolylinesDimensions.size() << std::endl;
 
@@ -159,6 +185,22 @@ void MeshModel::initGLSL_CatmullDimensions(QOpenGLExtraFunctions*  cur_glFunctio
     cur_glFunctions->glVertexAttribIPointer(m_dimensionsBufferPos, 1, GL_INT, 1.0 * sizeof(int), (void*)0);
     cur_glFunctions->glEnableVertexAttribArray(m_dimensionsBufferPos);
     checkOpenGLError();
+}
+
+void MeshModel::initGLSL_imagePolyLinesDimensions(QOpenGLExtraFunctions*  cur_glFunctions){
+    if(DEBUGAPP) std::cout << "[Model] init GLSL dimensions imagePolyLines : " << m_imagePolyLines.size() << std::endl;
+
+    std::vector<float>  dim;
+    dim.reserve(m_imagePolyLines.size());
+    for(unsigned int i = 0; i<m_imagePolyLines.size(); i++){
+        dim.push_back(2);
+    }
+    cur_glFunctions->glBindBuffer(GL_ARRAY_BUFFER, m_dimensionsBuffer_imagePolyLines);
+    cur_glFunctions->glBufferData(GL_ARRAY_BUFFER, dim.size() * sizeof(int), &dim[0], GL_STATIC_DRAW);
+    cur_glFunctions->glVertexAttribIPointer(m_dimensionsBufferPos, 1, GL_INT, 1.0 * sizeof(int), (void*)0);
+    cur_glFunctions->glEnableVertexAttribArray(m_dimensionsBufferPos);
+    checkOpenGLError();
+    dim.clear();
 }
 
 void MeshModel::initGLSL_Default(ShaderProgram& renderingProgram){
@@ -191,6 +233,20 @@ void MeshModel::initGLSL_Catmull(ShaderProgram& renderingProgram){
     checkOpenGLError();
 }
 
+void MeshModel::initGLSL_imagePolyLines(ShaderProgram& renderingProgram){
+    if(DEBUGAPP){
+        std::cout << "[Model] init GLSL imagePolyLines" << std::endl;
+    }
+
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO_imagePolyLines);
+    initGLSL_imagePolyLinesVertices(renderingProgram.glFunctions);
+    initGLSL_imagePolyLinesDimensions(renderingProgram.glFunctions);
+
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    checkOpenGLError();
+}
+
 void MeshModel::initGLSL(ShaderProgram& renderingProgram){
     if(DEBUGAPP){
         std::cout << "[Model] init GLSL" << std::endl;
@@ -204,6 +260,7 @@ void MeshModel::initGLSL(ShaderProgram& renderingProgram){
 
     initGLSL_Default(renderingProgram);
     initGLSL_Catmull(renderingProgram);
+    initGLSL_imagePolyLines(renderingProgram);
 
     m_glslInitialised = true;
 
@@ -734,6 +791,14 @@ void MeshModel::drawPolylines(ShaderProgram&  renderingProgram,std::map<Subdomai
             }
         }
     }
+
+    renderingProgram.glFunctions->glBindVertexArray(0);
+    //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    renderingProgram.glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    renderingProgram.glFunctions->glBindVertexArray(m_VAO_imagePolyLines);
+    glPointSize(2.0f);
+    renderingProgram.glFunctions->glDrawArrays(GL_POINTS, 0, m_imagePolyLines.size());
 
     renderingProgram.glFunctions->glBindVertexArray(0);
     //renderingProgram.glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

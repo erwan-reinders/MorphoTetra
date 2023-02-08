@@ -1,4 +1,4 @@
-#ifndef MESHMODEL_H
+    #ifndef MESHMODEL_H
 #define MESHMODEL_H
 
 
@@ -7,10 +7,15 @@
 #include <QGLViewer/vec.h>
 #include <QGLViewer/camera.h>
 
+#include <QStatusBar>
+#include <QCoreApplication>
+
 #include "CGAL/cgal_headers.h"
+#include "CGAL/cgal_basicfunctions.h"
 #include "CGAL/Tetrahedron.h"
 #include "CGAL/Triangle.h"
 
+#include "Math_utilitiesfnc.h"
 
 #include <set>
 #include <map>
@@ -22,6 +27,7 @@ class MeshModel{
 private :
     std::vector<std::vector<C3t3::Edge>>              m_polyLines;
     std::vector<std::vector<std::vector<C3t3::Edge>>> m_groupPolyLines;
+    std::vector<Point_3> m_imagePolyLines;
 
     std::vector<Subdomain_index>    m_subdomain_indices;
     std::vector<Surface_index>         m_surface_indices;
@@ -53,6 +59,7 @@ private :
     GLuint m_verticesBufferPos, m_colorsBufferPos, m_normalsBufferPos,m_dimensionsBufferPos;
 
     GLuint m_VAO_smooth_Catmull, m_verticesBuffer_smooth_Catmull, m_dimensionsBuffer_smooth_Catmull;
+    GLuint m_VAO_imagePolyLines, m_verticesBuffer_imagePolyLines, m_dimensionsBuffer_imagePolyLines;
 
     float m_smoothPolylineSubdivisionNumber;
 
@@ -70,8 +77,12 @@ protected :
     void initGLSL_CatmullVertices(QOpenGLExtraFunctions*  cur_glFunctions);
     void initGLSL_CatmullDimensions(QOpenGLExtraFunctions*  cur_glFunctions);
 
+    void initGLSL_imagePolyLinesVertices(QOpenGLExtraFunctions*  cur_glFunctions);
+    void initGLSL_imagePolyLinesDimensions(QOpenGLExtraFunctions*  cur_glFunctions);
+
     void initGLSL_Default(ShaderProgram& renderingProgram);
     void initGLSL_Catmull(ShaderProgram& renderingProgram);
+    void initGLSL_imagePolyLines(ShaderProgram& renderingProgram);
 
     void CGALGeometry(C3t3 & m_c3t3);
 
@@ -85,7 +96,9 @@ public:
     MeshModel();
     virtual ~MeshModel();
 
-    void initFromFile(QString filename,
+    void initFromFile(QStatusBar * statusbar,
+                      QString filename,
+                      double edgeSize,
                       double facetAngle,
                       double facetSize,
                       double facetApproximation,

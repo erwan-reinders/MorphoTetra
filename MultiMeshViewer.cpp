@@ -365,11 +365,13 @@ void MultiMeshViewer::computeRandomColors(const std::vector<int> & subdomain_ind
 
 void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames) {
     loadMeshes(statusbar, filenames,
+               CRUDE_EDGE_SIZE,
                CRUDE_FACET_ANGLE, CRUDE_FACET_SIZE, CRUDE_FACET_APPROXIMATION, CGAL::FACET_VERTICES_ON_SURFACE,
                CRUDE_CELL_RATIO, CRUDE_CELL_SIZE,
                false, false);
 }
 void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,
+                                 double edgeSize,
                                  double facetAngle,
                                  double facetSize,
                                  double facetApproximation,
@@ -386,8 +388,8 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,
         QCoreApplication::processEvents();
 
         m_meshes.push_back(MeshModel());
-        m_meshes[m_meshes.size()-1].initFromFile(filename,
-            facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude);
+        m_meshes[m_meshes.size()-1].initFromFile(statusbar, filename,
+            edgeSize, facetAngle, facetSize, facetApproximation, facetTopology, cellRatio, cellSize, perturb, exude);
 
         statusbar->showMessage("Tetra mesh opened !");
         QCoreApplication::processEvents();

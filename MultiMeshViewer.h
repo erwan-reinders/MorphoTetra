@@ -64,6 +64,7 @@ public:
 
     void loadMeshes(QStatusBar *statusbar,QStringList filenames);
     void loadMeshes(QStatusBar *statusbar,QStringList filenames,
+                    double edgeSize,
                     double facetAngle,
                     double facetSize,
                     double facetApproximation,

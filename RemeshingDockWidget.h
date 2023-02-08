@@ -27,6 +27,7 @@ private:
     QDoubleSpinBox *    m_facetAngleNumber;
     QDoubleSpinBox *    m_facetSizeNumber;
     QDoubleSpinBox *    m_facetApproximationNumber;
+    QDoubleSpinBox *    m_edgeSizeNumber;
     QComboBox *         m_facetTopologyBox;
     QCheckBox *         m_perturbOption;
     QCheckBox *         m_exudeOption;
