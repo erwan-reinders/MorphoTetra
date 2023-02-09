@@ -465,7 +465,7 @@ void getC3t3FromInrFile(const char* filename, C3t3 & m_c3t3,
     // Domain
     //CGAL::Labeled_mesh_domain_3<K> domain = CGAL::Labeled_mesh_domain_3<K>::create_labeled_image_mesh_domain(image);
     Mesh_domain domain = Mesh_domain::create_labeled_image_mesh_domain(image);
-    std::vector<std::tuple<Mesh_domain::Curve_index,std::pair<Mesh_domain::Point_3,Mesh_domain::Index>,std::pair<Mesh_domain::Point_3,Mesh_domain::Index> >> curves;
+    //std::vector<std::tuple<Mesh_domain::Curve_index,std::pair<Mesh_domain::Point_3,Mesh_domain::Index>,std::pair<Mesh_domain::Point_3,Mesh_domain::Index> >> curves;
 
     // Mesh criteria
     Mesh_criteria::Edge_criteria edge_criteria(edgeSize);
@@ -477,6 +477,11 @@ void getC3t3FromInrFile(const char* filename, C3t3 & m_c3t3,
     p::internal::Exude_options exudeOption = exude ? p::exude() : p::no_exude();
     p::internal::Perturb_options perturbOption = perturb ? p::perturb() : p::no_perturb();
     m_c3t3 = CGAL::make_mesh_3<C3t3>(domain, criteria, exudeOption, perturbOption, p::features(domain));
+
+//    std::vector<std::tuple<Mesh_domain::Curve_index,std::pair<Mesh_domain::Point_3,Mesh_domain::Index>,std::pair<Mesh_domain::Point_3,Mesh_domain::Index> >> curves;
+//    domain.get_curves(std::back_inserter(curves));
+//    std::cout << curves.size() << std::endl;
+
 //    Mesh_domain::Subdomain sd = domain.is_in_domain_object()(Mesh_domain::Point_3(50, 50, 50));
 //    std::cout << "sd = " << sd.value_or(0) << std::endl;
 //    Mesh_domain::Index id = domain.index_from_subdomain_index(sd.value_or(0));

@@ -383,7 +383,6 @@ void MultiMeshViewer::loadMeshes(QStatusBar *statusbar, QStringList filenames,
     m_meshes.clear();
     QString filename;
     foreach (filename, filenames) {
-
         statusbar->showMessage("Opening tetra mesh : " + filename);
         QCoreApplication::processEvents();
 

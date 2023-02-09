@@ -120,10 +120,10 @@ public slots :
 
     void setFlatShading(bool state);
 signals:
-   void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
-   void setMeshSubdomains();
-   void updatePlayerTime(double _playerTime);
-   void pausePlayer();
+    void setMaxCutPlanes(int _xMax, int _yMax, int _zMax);
+    void setMeshSubdomains();
+    void updatePlayerTime(double _playerTime);
+    void pausePlayer();
 };
 
 #endif // MULTIMESHVIEWER_H

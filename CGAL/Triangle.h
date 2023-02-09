@@ -98,6 +98,21 @@ private:
   int label;
 };
 
+class Surface_Triangle : public Triangle {
+public:
+    inline Surface_Triangle (unsigned int v0, unsigned int v1, unsigned int v2, unsigned int l) : Triangle(v0, v1, v2, l) {
+        label2 = 0;
+    }
+    inline Surface_Triangle (unsigned int v0, unsigned int v1, unsigned int v2, unsigned int l1, unsigned int l2) : Triangle(v0, v1, v2, l1) {
+        label2 = l2;
+    }
+
+    inline unsigned int getLabel2 () const { return label2; }
+
+private:
+    int label2;
+};
+
 extern std::ostream & operator<< (std::ostream & output, const Triangle & t);
 
 

@@ -30,18 +30,18 @@ private :
     std::vector<Point_3> m_imagePolyLines;
 
     std::vector<Subdomain_index>    m_subdomain_indices;
-    std::vector<Surface_index>         m_surface_indices;
+    std::vector<Surface_index>      m_surface_indices;
 
     std::vector <qglviewer::Vec>    m_vertices;
     std::vector <qglviewer::Vec>    m_verticesSmoothPolylines;
-    std::vector <Triangle>          m_triangles;
+    std::vector <Surface_Triangle>  m_triangles;
     std::vector <Tetrahedron>       m_tetrahedra;
 
     std::vector<int> m_verticesSmoothPolylinesDimensions;
     std::vector<int> m_verticesDimensions;
 
     std::vector<Subdomain_index> m_vertices_subdomain_ids;
-    std::vector<Subdomain_index> m_triangles_subdomain_ids;
+    //std::vector<Subdomain_index> m_triangles_subdomain_ids;
     std::vector<Subdomain_index> m_tetrahedra_subdomain_ids;
 
     std::map <Subdomain_index, std::vector<unsigned int> > m_sortedVertices;
@@ -134,8 +134,8 @@ public:
     std::vector <qglviewer::Vec> & getVertices(){return m_vertices;}
     const std::vector <qglviewer::Vec> & getVertices() const {return m_vertices;}
 
-    std::vector <Triangle> & getTriangles(){return m_triangles;}
-    const std::vector <Triangle> & getTriangles() const {return m_triangles;}
+    std::vector <Surface_Triangle> & getTriangles(){return m_triangles;}
+    const std::vector <Surface_Triangle> & getTriangles() const {return m_triangles;}
 
     std::vector <Tetrahedron> & getTetrahedra(){return m_tetrahedra;}
     const std::vector <Tetrahedron> & getTetrahedra() const {return m_tetrahedra;}
